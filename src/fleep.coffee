@@ -49,7 +49,11 @@ class Fleep extends Adapter
     @fleepClient = new FleepClient {conversations: @options.conversations, name: @options.name}, @robot
     
     @fleepClient.on 'connected', =>
-      Util.log 'Connected, starting polling'
+      Util.debug 'Connected, syncing...'
+      @fleepClient.sync()
+      
+    @fleepClient.on 'synced', =>
+      Util.log 'Synced, starting polling'
       @fleepClient.poll()
       
     @fleepClient.on 'gotMessage', (author, message) =>

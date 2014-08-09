@@ -13,11 +13,16 @@ module.exports = class FleepClient extends EventEmitter
     @ticket = null
     @token_id = null
 
+    @profile = 
+      account_id : null,
+      display_name : null
+
     @on 'pollcomplete', (resp) =>
       Util.debug 'Poll complete'
       @handleStreamEvents resp
       Util.debug 'Sending new poll request'
       @poll()
+
     
   post: (path, body, callback) ->
     WebRequest.request path, body, callback, @ticket, @token_id
@@ -43,6 +48,9 @@ module.exports = class FleepClient extends EventEmitter
         Util.debug "Login returned token_id cookie #{metaData.token_id}"
         @token_id = metaData.token_id
 
+      @profile.account_id = resp.account_id
+      @profile.display_name = resp.display_name
+
       # Tell Hubot we're connected so it can load scripts
       Util.log "Successfully connected Bot #{@name} with Fleep"
       @emit 'connected'
@@ -62,6 +70,9 @@ module.exports = class FleepClient extends EventEmitter
     if not event.mk_rec_type?
       Util.logError 'Invalid response from the server'
 
+    if event.mk_rec_type is 'contact'
+      Util.debug event
+      return
     if event.mk_rec_type isnt 'message'
       Util.debug 'Skipping stream item '+event.mk_rec_type+', not a message type of event'
       return
@@ -70,6 +81,10 @@ module.exports = class FleepClient extends EventEmitter
       Util.debug 'Skipping stream item '+event.mk_rec_type+', not in a list of monitored conversations'
       return
     
+    if event.account_id is @profile.account_id
+      Util.debug 'It is my own message, ignore it'
+      return
+      
     message = event.message.replace(/(<([^>]+)>)/ig,"")
     @markRead event.conversation_id, event.message_nr
     @handleMessage message, event.account_id, event.conversation_id
@@ -86,7 +101,11 @@ module.exports = class FleepClient extends EventEmitter
 
   poll: =>
     Util.debug 'Starting long poll request'
-    @post 'account/poll', {wait: true, event_horizon: @getLastEventHorizon()}, (err, resp) =>
+    data = 
+      wait: true,
+      event_horizon: @getLastEventHorizon()
+      poll_flags: ['skip_hidden']
+    @post 'account/poll', data, (err, resp) =>
       @emit 'pollcomplete', resp
 
   send: (message, conversation_id) =>
@@ -104,4 +123,9 @@ module.exports = class FleepClient extends EventEmitter
     @post "conversation/set_topic/#{conversation_id}", {topic: topic}, (err,resp) =>
       Util.debug resp
 
-  
+  sync:  =>
+    Util.debug "Syncing..."
+    @post 'account/sync', {}, (err, resp) =>
+      Util.debug 'Syncing conversation response'
+      @setLastEventHorizon resp.event_horizon
+      @emit 'synced'
