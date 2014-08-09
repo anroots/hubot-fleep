@@ -84,7 +84,7 @@ module.exports = class FleepClient extends EventEmitter
     if event.account_id is @profile.account_id
       Util.debug 'It is my own message, ignore it'
       return
-      
+
     message = event.message.replace(/(<([^>]+)>)/ig,"")
     @markRead event.conversation_id, event.message_nr
     @handleMessage message, event.account_id, event.conversation_id
@@ -129,3 +129,7 @@ module.exports = class FleepClient extends EventEmitter
       Util.debug 'Syncing conversation response'
       @setLastEventHorizon resp.event_horizon
       @emit 'synced'
+    
+    Util.debug "Changing bot nick"
+    @post 'account/configure', {display_name: @name}, (err, resp) =>
+      Util.debug resp
