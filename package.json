@@ -1,0 +1,22 @@
+{
+  "name":        "hubot-fleep",
+  "version":     "0.1.0",
+  "author":      "Ando Roots <ando@sqroot.eu>",
+  "keywords":    ["github","hubot","fleep","adapter"],
+  "description": "Fleep adapter for hubot",
+  "licenses":     [{
+    "type":       "MIT",
+    "url":        "https://raw.githubusercontent.com/anroots/hubot-fleep/master/LICENSE"
+  }],
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/anroots/hubot-fleep.git"
+  },
+  "devDependencies": {
+    "coffee-script": "1.6.3"
+  },
+  "main": "./src/fleep",
+  "engine": {
+    "node": ">= 0.4.7"
+  }
+}
