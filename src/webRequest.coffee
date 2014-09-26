@@ -59,8 +59,8 @@ module.exports = class WebRequest extends EventEmitter
   
       response.on 'end', =>
         if response.statusCode >= 400
-          Util.logerror "Fleep API error : #{response.statusCode}"
-          Util.logerror data
+          Util.logError "Fleep API error : #{response.statusCode}"
+          Util.logError data
   
         Util.debug 'Response headers:'
         Util.debug response.headers
@@ -81,14 +81,14 @@ module.exports = class WebRequest extends EventEmitter
         callback? null, data, metaData
   
         response.on 'error', (err) ->
-          Util.logerror 'HTTPS response error:', err
+          Util.logError 'HTTPS response error:', err
           callback? err, null
   
     request.end body, 'binary'
   
     request.on 'error', (err) ->
-      Util.logerror 'HTTPS request error:', err
-      Util.logerror err.stack
+      Util.logError 'HTTPS request error:', err
+      Util.logError err.stack
       callback? err
 
   
