@@ -42,7 +42,7 @@ class Fleep extends Adapter
     Util.debug 'Adapter options:'
     Util.debug @options
 
-    return @logError 'No email provided to Hubot' unless @options.email
+    return Util.logError 'No email provided to Hubot' unless @options.email
     return @logError 'No password provided to Hubot' unless @options.password
     return @logError 'No conversation IDs provided to Hubot' unless @options.conversations.length
     
