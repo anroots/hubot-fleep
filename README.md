@@ -2,6 +2,10 @@
 
 [Hubot](https://github.com/github/hubot) adapter for [Fleep.io](http://fleep.io).
 
+## Project status
+
+The adapter is in alpha status: it works for straightforward usage, but contains yet-to-be-discovered bugs. See the Issues tab for a list of known bugs and create a new issue if you discover something new.
+
 # Installation
 
 * Follow the "[Getting Started With Hubot](https://github.com/github/hubot/blob/master/docs/README.md)" guide to get a local installation of Hubot
@@ -9,8 +13,10 @@
 * Copy the `start.sh` script and change the values
 * Start hubot by running `./start.sh`
 
-# Project status
+# Contributing
 
-The adapter works, but only for really straightforward usage. A lot of corner cases are as of yet unhandled: what happens when the bot joins with a conversation with previous history? What happens if the bot is present in multiple channels? What happens...
+You can contribute to the development of this adapter by sending well-formatted (commented) pull requests and by reporting issues.
 
-Feel free to build upon it (send pull requests!) and use it, but please, don't do it in production.
+# Licence
+
+The MIT License (MIT)
