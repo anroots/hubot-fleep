@@ -7,7 +7,7 @@ module.exports = class FleepClient extends EventEmitter
   
   constructor: (options, @robot) ->
     
-    @conversations = options.conversations
+    @conversations = []
     @name = options.name
     
     @ticket = null
@@ -78,8 +78,8 @@ module.exports = class FleepClient extends EventEmitter
       return
 
     if event.conversation_id not in @conversations
-      Util.debug 'Skipping stream item '+event.mk_rec_type+', not in a list of monitored conversations'
-      return
+      Util.debug "New conversation! Conversation #{event.conversation_id} was not in the list of monitored conversations, adding it now"
+      @conversations.push event.conversation_id
     
     if event.account_id is @profile.account_id
       Util.debug 'It is my own message, ignore it'
