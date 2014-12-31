@@ -65,24 +65,44 @@ module.exports = class FleepClient extends EventEmitter
       Util.debug 'Updating last seen event horizon to '+resp.event_horizon
     Util.debug 'Finished handling long poll response'
 
+  # Processes a single Event object in a list of Fleep events
   handleStreamEvent: (event) =>
 
+    # Event does not have a rec_type, API error?
     if not event.mk_rec_type?
       Util.logError 'Invalid response from the server'
+      return
 
+    # New contact information, currently we don't do anything with it
     if event.mk_rec_type is 'contact'
       Util.debug event
       return
+
+    # Skip everything but text message events
     if event.mk_rec_type isnt 'message'
       Util.debug 'Skipping stream item '+event.mk_rec_type+', not a message type of event'
       return
 
+    # Detected a new conversation
     if event.conversation_id not in @conversations
       Util.debug "New conversation! Conversation #{event.conversation_id} was not in the list of monitored conversations, adding it now"
       @conversations.push event.conversation_id
     
+    # This message is an echo of our own message, ignore
     if event.account_id is @profile.account_id
       Util.debug 'It is my own message, ignore it'
+      return
+
+    # Ignore edited messages (messages that were posted, then edited)
+    # See https://github.com/anroots/hubot-fleep/issues/4
+    if event.revision_message_nr?
+      Util.debug 'This is an edited message, skipping...'
+      return
+
+    # Ignore messages without the 'message' key - some invalid state
+    if not event.message?
+      Util.logError 'Invalid response from the server, expected a message key'
+      Util.debug event
       return
 
     message = event.message.replace(/(<([^>]+)>)/ig,"")
