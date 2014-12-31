@@ -46,7 +46,7 @@ class Fleep extends Adapter
     return Util.logError 'No password provided to Hubot' unless @options.password
     return Util.logError 'No conversation IDs provided to Hubot' unless @options.conversations.length
     
-    @fleepClient = new FleepClient {conversations: @options.conversations, name: @options.name}, @robot
+    @fleepClient = new FleepClient {conversations: @options.conversations, name: @robot.name}, @robot
     
     @fleepClient.on 'connected', =>
       Util.debug 'Connected, syncing...'
@@ -66,8 +66,6 @@ class Fleep extends Adapter
         @initBrain()
 
 
-    # Provide our name to Hubot
-    @robot.name = @options.name
     @emit 'connected'
 
 
