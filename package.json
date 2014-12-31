@@ -1,6 +1,6 @@
 {
   "name":        "hubot-fleep",
-  "version":     "0.1.0",
+  "version":     "0.1.1",
   "author":      "Ando Roots <ando@sqroot.eu>",
   "keywords":    ["github","hubot","fleep","adapter"],
   "description": "Fleep adapter for hubot",
