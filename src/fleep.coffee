@@ -7,6 +7,7 @@ FleepClient = require './fleepClient'
 
 
 class Fleep extends Adapter
+  
   constructor: (robot) ->
     super robot
 
