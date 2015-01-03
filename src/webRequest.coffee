@@ -49,7 +49,7 @@ module.exports = class WebRequest extends EventEmitter
     Util.debug 'Request options:'
     Util.debug reqOptions
     
-    # Send the request  
+    # Send the request
     request = https.request reqOptions, (response) =>
 
       Util.debug 'Got response from the server.'
@@ -72,7 +72,8 @@ module.exports = class WebRequest extends EventEmitter
           
         metaData = {}
 
-        if response.headers['set-cookie']? and response.headers['set-cookie'][0]?
+        if response.headers['set-cookie']? and
+        response.headers['set-cookie'][0]?
           token_id = @getCookie response.headers['set-cookie'][0]
           Util.debug 'Saving cookie value for later use: token_id='+token_id
           metaData['token_id'] = token_id

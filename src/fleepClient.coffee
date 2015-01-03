@@ -13,7 +13,7 @@ module.exports = class FleepClient extends EventEmitter
     @ticket = null
     @token_id = null
 
-    @profile = 
+    @profile =
       account_id : null,
       display_name : null
 
@@ -38,7 +38,10 @@ module.exports = class FleepClient extends EventEmitter
   login: (email, password) =>
     Util.debug 'Attempting to log in...'
     
-    @post 'account/login', {email: email, password: password}, (err, resp, metaData) =>
+    @post 'account/login', {
+      email: email,
+      password: password
+      }, (err, resp, metaData) =>
       
       if resp.ticket?
         Util.debug "Login returned ticket #{resp.ticket}"
@@ -80,12 +83,14 @@ module.exports = class FleepClient extends EventEmitter
 
     # Skip everything but text message events
     if event.mk_rec_type isnt 'message'
-      Util.debug 'Skipping stream item '+event.mk_rec_type+', not a message type of event'
+      Util.debug 'Skipping stream item ' +
+      event.mk_rec_type + ', not a messag-e type of event'
       return
 
     # Detected a new conversation
     if event.conversation_id not in @conversations
-      Util.debug "New conversation! Conversation #{event.conversation_id} was not in the list of monitored conversations, adding it now"
+      Util.debug "New conversation! Conversation #{event.conversation_id}" +
+      "was not in the list of monitored conversations, adding it now"
       @conversations.push event.conversation_id
     
     # This message is an echo of our own message, ignore
@@ -121,7 +126,7 @@ module.exports = class FleepClient extends EventEmitter
 
   poll: =>
     Util.debug 'Starting long poll request'
-    data = 
+    data =
       wait: true,
       event_horizon: @getLastEventHorizon()
       poll_flags: ['skip_hidden']
@@ -129,18 +134,23 @@ module.exports = class FleepClient extends EventEmitter
       @emit 'pollcomplete', resp
 
   send: (message, conversation_id) =>
-    Util.debug 'FleepClient: sending new message to conversation '+conversation_id
-    @post "message/send/#{conversation_id}", {message: message}, (err, resp) =>
+    Util.debug 'Sending new message to conversation ' + conversation_id
+    @post "message/send/#{conversation_id}", {message: message}, (err, resp) ->
       Util.debug resp
 
   markRead: (conversation_id, message_nr) =>
-    Util.debug "Marking message #{message_nr} of conversation #{conversation_id} as read"
-    @post "message/mark_read/#{conversation_id}", {message_nr: message_nr}, (err, resp) =>
+    Util.debug "Marking message #{message_nr} of conversation " +
+    "#{conversation_id} as read"
+    @post "message/mark_read/#{conversation_id}", {
+      message_nr: message_nr
+      }, (err, resp) ->
       Util.debug 'Message marked as read.'
 
   topic: (conversation_id, topic) =>
     Util.debug "Setting conversation #{conversation_id} topic to #{topic}"
-    @post "conversation/set_topic/#{conversation_id}", {topic: topic}, (err,resp) =>
+    @post "conversation/set_topic/#{conversation_id}", {
+      topic: topic
+      }, (err,resp) ->
       Util.debug resp
 
   sync:  =>
@@ -151,5 +161,5 @@ module.exports = class FleepClient extends EventEmitter
       @emit 'synced'
     
     Util.debug "Changing bot nick"
-    @post 'account/configure', {display_name: @name}, (err, resp) =>
+    @post 'account/configure', {display_name: @name}, (err, resp) ->
       Util.debug resp

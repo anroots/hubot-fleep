@@ -42,8 +42,8 @@ class Fleep extends Adapter
     Util.debug 'Adapter options:'
     Util.debug @options
 
-    return Util.logError 'No email provided to Hubot' unless @options.email
-    return Util.logError 'No password provided to Hubot' unless @options.password
+    return Util.logError 'Specify Fleep email' unless @options.email
+    return Util.logError 'Specify Fleep password' unless @options.password
 
     @fleepClient = new FleepClient {name: @robot.name}, @robot
     
