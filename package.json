@@ -18,5 +18,9 @@
   "main": "./src/fleep",
   "engine": {
     "node": ">= 0.4.7"
+  },
+  "devDependencies": {
+    "coffee-script": "latest",
+    "coffeelint": "latest"
   }
 }

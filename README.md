@@ -2,6 +2,8 @@
 
 [Hubot](https://github.com/github/hubot) adapter for [Fleep.io](http://fleep.io).
 
+![Build Status](https://travis-ci.org/anroots/hubot-fleep.svg)
+
 ## Project status
 
 The adapter is in alpha status: it works for straightforward usage, but contains yet-to-be-discovered bugs. See the Issues tab for a list of known bugs and create a new issue if you discover something new.
