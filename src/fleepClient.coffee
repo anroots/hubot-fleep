@@ -59,6 +59,10 @@ module.exports = class FleepClient extends EventEmitter
       @robot.logger.info "Successfully connected Bot #{@name} with Fleep"
       @emit 'connected'
 
+  logout: ->
+    @post 'account/logout', {}, (err, resp) ->
+      @robot.logger.debug 'User session with Fleep closed.'
+      
   handleStreamEvents: (resp) =>
     if resp.stream? and resp.stream.length
       @handleStreamEvent event for event in resp.stream

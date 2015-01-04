@@ -16,9 +16,6 @@ class Fleep extends Adapter
     @robot.logger.info 'Sending Hubot message: '+message
     @fleepClient.send message, envelope.room
 
-  reply: (envelope, strings...) ->
-    @robot.logger.info 'Sending Hubot reply'
-
   topic: (params, strings...) ->
     @robot.logger.info 'Hubot: changing topic'
     @fleepClient.topic params.room, strings[0]
@@ -71,7 +68,8 @@ class Fleep extends Adapter
 
     @emit 'connected'
 
-
+  close: ->
+    @fleepClient.logout
 
 exports.use = (robot) ->
   new Fleep robot
