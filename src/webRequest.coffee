@@ -7,7 +7,10 @@ Util = require './util'
 
 module.exports = class WebRequest extends EventEmitter
 
-  @prepareReqOptions: (path, body, ticket, token_id) ->
+  constructor: (@logger) ->
+    super 
+    
+  prepareReqOptions: (path, body, ticket, token_id) ->
     host = 'fleep.io'
     headers =
       Host: host
@@ -15,7 +18,7 @@ module.exports = class WebRequest extends EventEmitter
   
     if token_id?
       cookie = 'token_id='+token_id
-      Util.debug "Setting cookie: #{cookie}"
+      @logger.debug "Setting cookie: #{cookie}"
       headers['Cookie'] = cookie
       
     reqOptions =
@@ -27,11 +30,11 @@ module.exports = class WebRequest extends EventEmitter
       headers  : headers
       
     if ticket?
-      Util.debug "Setting ticket: #{ticket}"
+      @logger.debug "Setting ticket: #{ticket}"
       body.ticket = ticket
         
-    Util.debug 'Request body:'
-    Util.debug body
+    @logger.debug 'Request body:'
+    @logger.debug body
         
     body = new Buffer JSON.stringify(body)
         
@@ -41,63 +44,63 @@ module.exports = class WebRequest extends EventEmitter
     [reqOptions, body]
 
 
-  @request: (path, body, callback, ticket, token_id) ->
-    Util.debug 'Sending new POST request'
+  post: (path, body, callback, ticket, token_id) ->
+    @logger.debug 'Sending new POST request'
 
-    [reqOptions, body] = @prepareReqOptions path, body, ticket, token_id
+    [reqOptions, body] = this.prepareReqOptions path, body, ticket, token_id
 
-    Util.debug 'Request options:'
-    Util.debug reqOptions
+    @logger.debug 'Request options:'
+    @logger.debug reqOptions
     
     # Send the request
     request = https.request reqOptions, (response) =>
 
-      Util.debug 'Got response from the server.'
+      @logger.debug 'Got response from the server.'
       data = ''
       response.on 'data', (chunk) ->
         data += chunk
   
       response.on 'end', =>
         if response.statusCode >= 400
-          Util.logError "Fleep API error : #{response.statusCode}"
-          Util.logError data
+          @logger.error "Fleep API error : #{response.statusCode}"
+          @logger.error data
   
-        Util.debug 'Response headers:'
-        Util.debug response.headers
+        @logger.debug 'Response headers:'
+        @logger.debug response.headers
           
         data = JSON.parse data
 
-        Util.debug 'HTTPS response body:'
-        Util.debug data
+        @logger.debug 'HTTPS response body:'
+        @logger.debug data
           
         metaData = {}
 
         if response.headers['set-cookie']? and
         response.headers['set-cookie'][0]?
-          token_id = @getCookie response.headers['set-cookie'][0]
-          Util.debug 'Saving cookie value for later use: token_id='+token_id
+          token_id = this.getCookie response.headers['set-cookie'][0]
+          @logger.debug 'Saving cookie value for later use: token_id='+token_id
           metaData['token_id'] = token_id
           
-        Util.debug 'Calling callback of request '+reqOptions.path
+        @logger.debug 'Calling callback of request '+reqOptions.path
         callback? null, data, metaData
   
         response.on 'error', (err) ->
-          Util.logError 'HTTPS response error:', err
+          @logger.error 'HTTPS response error:', err
           callback? err, null
   
     request.end body, 'binary'
   
     request.on 'error', (err) ->
-      Util.logError 'HTTPS request error:', err
-      Util.logError err.stack
+      @logger.error 'HTTPS request error:', err
+      @logger.error err.stack
       callback? err
 
   
 
-  @getCookie: (header) ->
-    Util.debug 'Parsing cookie string ' + header
+  getCookie: (header) ->
+    @logger.debug 'Parsing cookie string ' + header
     parts = header.split ';'
     if parts[0]?
       parts = parts[0].split '='
-      Util.debug 'Token is ' + parts[1]
+      @logger.debug 'Token is ' + parts[1]
       parts[1]

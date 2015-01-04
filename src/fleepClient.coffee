@@ -18,25 +18,26 @@ module.exports = class FleepClient extends EventEmitter
       display_name : null
 
     @on 'pollcomplete', (resp) =>
-      Util.debug 'Poll complete'
+      @robot.logger.debug 'Poll complete'
       @handleStreamEvents resp
-      Util.debug 'Sending new poll request'
+      @robot.logger.debug 'Sending new poll request'
       @poll()
 
     
   post: (path, body, callback) ->
-    WebRequest.request path, body, callback, @ticket, @token_id
+    request = new WebRequest(@robot.logger)
+    request.post path, body, callback, @ticket, @token_id
 
   getLastEventHorizon: ->
     last = @robot.brain.get 'fleep_last_horizon'
-    Util.debug 'Last event horizon from robot brain: '+last
+    @robot.logger.debug 'Last event horizon from robot brain: '+last
     last or 0
     
   setLastEventHorizon: (horizon) ->
     @robot.brain.set 'fleep_last_horizon', horizon
 
   login: (email, password) =>
-    Util.debug 'Attempting to log in...'
+    @robot.logger.debug 'Attempting to log in...'
     
     @post 'account/login', {
       email: email,
@@ -44,70 +45,70 @@ module.exports = class FleepClient extends EventEmitter
       }, (err, resp, metaData) =>
       
       if resp.ticket?
-        Util.debug "Login returned ticket #{resp.ticket}"
+        @robot.logger.debug "Login returned ticket #{resp.ticket}"
         @ticket = resp.ticket
       
       if metaData.token_id?
-        Util.debug "Login returned token_id cookie #{metaData.token_id}"
+        @robot.logger.debug "Login returned token_id cookie #{metaData.token_id}"
         @token_id = metaData.token_id
 
       @profile.account_id = resp.account_id
       @profile.display_name = resp.display_name
 
       # Tell Hubot we're connected so it can load scripts
-      Util.log "Successfully connected Bot #{@name} with Fleep"
+      @robot.logger.info "Successfully connected Bot #{@name} with Fleep"
       @emit 'connected'
 
   handleStreamEvents: (resp) =>
     if resp.stream? and resp.stream.length
       @handleStreamEvent event for event in resp.stream
     else
-      Util.debug 'Response stream length 0, nothing to parse.'
+      @robot.logger.debug 'Response stream length 0, nothing to parse.'
     if resp.event_horizon?
       @setLastEventHorizon resp.event_horizon
-      Util.debug 'Updating last seen event horizon to '+resp.event_horizon
-    Util.debug 'Finished handling long poll response'
+      @robot.logger.debug 'Updating last seen event horizon to '+resp.event_horizon
+    @robot.logger.debug 'Finished handling long poll response'
 
   # Processes a single Event object in a list of Fleep events
   handleStreamEvent: (event) =>
 
     # Event does not have a rec_type, API error?
     if not event.mk_rec_type?
-      Util.logError 'Invalid response from the server'
+      @robot.logger.error 'Invalid response from the server'
       return
 
     # New contact information, currently we don't do anything with it
     if event.mk_rec_type is 'contact'
-      Util.debug event
+      @robot.logger.debug event
       return
 
     # Skip everything but text message events
     if event.mk_rec_type isnt 'message'
-      Util.debug 'Skipping stream item ' +
+      @robot.logger.debug 'Skipping stream item ' +
       event.mk_rec_type + ', not a messag-e type of event'
       return
 
     # Detected a new conversation
     if event.conversation_id not in @conversations
-      Util.debug "New conversation! Conversation #{event.conversation_id}" +
+      @robot.logger.debug "New conversation! Conversation #{event.conversation_id}" +
       "was not in the list of monitored conversations, adding it now"
       @conversations.push event.conversation_id
     
     # This message is an echo of our own message, ignore
     if event.account_id is @profile.account_id
-      Util.debug 'It is my own message, ignore it'
+      @robot.logger.debug 'It is my own message, ignore it'
       return
 
     # Ignore edited messages (messages that were posted, then edited)
     # See https://github.com/anroots/hubot-fleep/issues/4
     if event.revision_message_nr?
-      Util.debug 'This is an edited message, skipping...'
+      @robot.logger.debug 'This is an edited message, skipping...'
       return
 
     # Ignore messages without the 'message' key - some invalid state
     if not event.message?
-      Util.logError 'Invalid response from the server, expected a message key'
-      Util.debug event
+      @robot.logger.error 'Invalid response from the server, expected a message key'
+      @robot.logger.debug event
       return
 
     message = event.message.replace(/(<([^>]+)>)/ig,"")
@@ -115,7 +116,7 @@ module.exports = class FleepClient extends EventEmitter
     @handleMessage message, event.account_id, event.conversation_id
     
   handleMessage: (message, author_id, conversation_id) =>
-    Util.log 'Got message: ' + message
+    @robot.logger.info 'Got message: ' + message
 
     author = @robot.brain.userForId author_id
     author.room = conversation_id
@@ -125,7 +126,7 @@ module.exports = class FleepClient extends EventEmitter
 
 
   poll: =>
-    Util.debug 'Starting long poll request'
+    @robot.logger.debug 'Starting long poll request'
     data =
       wait: true,
       event_horizon: @getLastEventHorizon()
@@ -134,32 +135,32 @@ module.exports = class FleepClient extends EventEmitter
       @emit 'pollcomplete', resp
 
   send: (message, conversation_id) =>
-    Util.debug 'Sending new message to conversation ' + conversation_id
+    @robot.logger.debug 'Sending new message to conversation ' + conversation_id
     @post "message/send/#{conversation_id}", {message: message}, (err, resp) ->
-      Util.debug resp
+      @robot.logger.debug resp
 
   markRead: (conversation_id, message_nr) =>
-    Util.debug "Marking message #{message_nr} of conversation " +
+    @robot.logger.debug "Marking message #{message_nr} of conversation " +
     "#{conversation_id} as read"
     @post "message/mark_read/#{conversation_id}", {
       message_nr: message_nr
       }, (err, resp) ->
-      Util.debug 'Message marked as read.'
+      @robot.logger.debug 'Message marked as read.'
 
   topic: (conversation_id, topic) =>
-    Util.debug "Setting conversation #{conversation_id} topic to #{topic}"
+    @robot.logger.debug "Setting conversation #{conversation_id} topic to #{topic}"
     @post "conversation/set_topic/#{conversation_id}", {
       topic: topic
       }, (err,resp) ->
-      Util.debug resp
+      @robot.logger.debug resp
 
   sync:  =>
-    Util.debug "Syncing..."
+    @robot.logger.debug "Syncing..."
     @post 'account/sync', {}, (err, resp) =>
-      Util.debug 'Syncing conversation response'
+      @robot.logger.debug 'Syncing conversation response'
       @setLastEventHorizon resp.event_horizon
       @emit 'synced'
     
-    Util.debug "Changing bot nick"
+    @robot.logger.debug "Changing bot nick"
     @post 'account/configure', {display_name: @name}, (err, resp) ->
-      Util.debug resp
+      @robot.logger.debug resp

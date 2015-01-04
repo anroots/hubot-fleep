@@ -13,14 +13,14 @@ class Fleep extends Adapter
 
   send: (envelope, strings...) ->
     message = strings[0]
-    Util.log 'Sending Hubot message: '+message
+    @robot.logger.info 'Sending Hubot message: '+message
     @fleepClient.send message, envelope.room
 
   reply: (envelope, strings...) ->
-    Util.log 'Sending Hubot reply'
+    @robot.logger.info 'Sending Hubot reply'
 
   topic: (params, strings...) ->
-    Util.log 'Hubot: changing topic'
+    @robot.logger.info 'Hubot: changing topic'
     @fleepClient.topic params.room, strings[0]
 
 
@@ -28,32 +28,32 @@ class Fleep extends Adapter
   #
   # Returns nothing.
   receive: (message) ->
-    Util.log 'Patching message to Robot: '+message
+    @robot.logger.info 'Patching message to Robot: '+message
     @robot.receive message
 
   initBrain: =>
     @robot.brain.setAutoSave true
-    Util.debug 'Robot brain connected.'
+    @robot.logger.debug 'Robot brain connected.'
     @fleepClient.login @options.email, @options.password
 
   run: ->
 
-    Util.log 'Starting Hubot with the Fleep.io adapter...'
+    @robot.logger.info 'Starting Hubot with the Fleep.io adapter...'
     @options = Util.parseOptions()
-    Util.debug 'Adapter options:'
-    Util.debug @options
+    @robot.logger.debug 'Adapter options:'
+    @robot.logger.debug @options
 
-    return Util.logError 'Specify Fleep email' unless @options.email
-    return Util.logError 'Specify Fleep password' unless @options.password
+    return @robot.logger.emergency 'Specify Fleep email' unless @options.email
+    return @robot.logger.emergency 'Specify Fleep password' unless @options.password
 
     @fleepClient = new FleepClient {name: @robot.name}, @robot
     
     @fleepClient.on 'connected', =>
-      Util.debug 'Connected, syncing...'
+      @robot.logger.debug 'Connected, syncing...'
       @fleepClient.sync()
       
     @fleepClient.on 'synced', =>
-      Util.log 'Synced, starting polling'
+      @robot.logger.info 'Synced, starting polling'
       @fleepClient.poll()
       
     @fleepClient.on 'gotMessage', (author, message) =>
