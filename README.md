@@ -16,6 +16,17 @@ The adapter is in alpha status: it works for straightforward usage, but contains
 * Start hubot by running `./start.sh`
 * Add the Hubot Fleep user to any conversation in Fleep
 
+## Environment variables
+
+The adapter requires the following environment variables to be defined:
+
+* `HUBOT_FLEEP_EMAIL` _string, default: none_ - The e-mail of your Fleep account for the Hubot instance
+* `HUBOT_FLEEP_PASSWORD` _string, default: none_ - The password of your Fleep account
+
+In addition, the following optional variables can be set:
+
+* `HUBOT_LOG_LEVEL` _string [debug|info|notice|warning|error|critical|alert|emergency], default: info_ - Set the log level of Hubot. The Fleep adapter can output extensive debug messages.
+
 # Contributing
 
 You can contribute to the development of this adapter by sending pull requests and by reporting issues.

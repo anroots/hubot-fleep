@@ -1,9 +1,9 @@
 {
   "name":        "hubot-fleep",
-  "version":     "0.2.1",
+  "version":     "0.3.0",
   "author":      "Ando Roots <ando@sqroot.eu>",
   "keywords":    ["github","hubot","fleep","adapter"],
-  "description": "Fleep adapter for hubot",
+  "description": "Fleep.io adapter for Hubot",
   "licenses":     [{
     "type":       "MIT",
     "url":        "https://raw.githubusercontent.com/anroots/hubot-fleep/master/LICENSE"

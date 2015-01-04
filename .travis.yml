@@ -4,3 +4,7 @@ node_js:
   - 0.11
 before_script:
   - coffeelint src
+notifications:
+  email:
+    on_success: never
+    on_failure: always
