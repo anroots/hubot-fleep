@@ -8,8 +8,8 @@ Util = require './util'
 module.exports = class WebRequest extends EventEmitter
 
   constructor: (@logger) ->
-    super 
-    
+    super
+
   prepareReqOptions: (path, body, ticket, token_id) ->
     host = 'fleep.io'
     headers =

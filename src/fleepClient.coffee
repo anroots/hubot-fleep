@@ -49,7 +49,7 @@ module.exports = class FleepClient extends EventEmitter
         @ticket = resp.ticket
       
       if metaData.token_id?
-        @robot.logger.debug "Login returned token_id cookie #{metaData.token_id}"
+        @robot.logger.debug 'Login returned token_id cookie:'+metaData.token_id
         @token_id = metaData.token_id
 
       @profile.account_id = resp.account_id
@@ -66,7 +66,8 @@ module.exports = class FleepClient extends EventEmitter
       @robot.logger.debug 'Response stream length 0, nothing to parse.'
     if resp.event_horizon?
       @setLastEventHorizon resp.event_horizon
-      @robot.logger.debug 'Updating last seen event horizon to '+resp.event_horizon
+      @robot.logger.debug 'Updating last seen event horizon to '+
+      resp.event_horizon
     @robot.logger.debug 'Finished handling long poll response'
 
   # Processes a single Event object in a list of Fleep events
@@ -90,8 +91,9 @@ module.exports = class FleepClient extends EventEmitter
 
     # Detected a new conversation
     if event.conversation_id not in @conversations
-      @robot.logger.debug "New conversation! Conversation #{event.conversation_id}" +
-      "was not in the list of monitored conversations, adding it now"
+      @robot.logger.debug "New conversation! Conversation " +
+      "#{event.conversation_id} was not in the list of monitored " +
+      "conversations, adding it now"
       @conversations.push event.conversation_id
     
     # This message is an echo of our own message, ignore
@@ -107,7 +109,7 @@ module.exports = class FleepClient extends EventEmitter
 
     # Ignore messages without the 'message' key - some invalid state
     if not event.message?
-      @robot.logger.error 'Invalid response from the server, expected a message key'
+      @robot.logger.error 'Invalid API response from the server!'
       @robot.logger.debug event
       return
 
@@ -148,7 +150,8 @@ module.exports = class FleepClient extends EventEmitter
       @robot.logger.debug 'Message marked as read.'
 
   topic: (conversation_id, topic) =>
-    @robot.logger.debug "Setting conversation #{conversation_id} topic to #{topic}"
+    @robot.logger.debug "Setting conversation #{conversation_id} "+
+    "topic to #{topic}"
     @post "conversation/set_topic/#{conversation_id}", {
       topic: topic
       }, (err,resp) ->
