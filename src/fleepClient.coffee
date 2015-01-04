@@ -24,7 +24,7 @@ module.exports = class FleepClient extends EventEmitter
       @poll()
 
     
-  post: (path, body, callback) ->
+  post: (path, body = {}, callback) ->
     request = new WebRequest(@robot.logger)
     request.post path, body, callback, @ticket, @token_id
 
@@ -70,17 +70,25 @@ module.exports = class FleepClient extends EventEmitter
       resp.event_horizon
     @robot.logger.debug 'Finished handling long poll response'
 
+
   # Processes a single Event object in a list of Fleep events
   handleStreamEvent: (event) =>
+
+    @robot.logger.debug event
 
     # Event does not have a rec_type, API error?
     if not event.mk_rec_type?
       @robot.logger.error 'Invalid response from the server'
       return
 
-    # New contact information, currently we don't do anything with it
+    # New contact information
     if event.mk_rec_type is 'contact'
-      @robot.logger.debug event
+      user = @robot.brain.userForId event.account_id
+
+      # Only save the contact name if it's currently unknown
+      if not user.name? or user.name is user.id
+        user.name = event.display_name
+        @robot.logger.debug "New contact: id #{user.id}, name #{user.name}"
       return
 
     # Skip everything but text message events
@@ -110,7 +118,6 @@ module.exports = class FleepClient extends EventEmitter
     # Ignore messages without the 'message' key - some invalid state
     if not event.message?
       @robot.logger.error 'Invalid API response from the server!'
-      @robot.logger.debug event
       return
 
     message = event.message.replace(/(<([^>]+)>)/ig,"")
@@ -123,9 +130,8 @@ module.exports = class FleepClient extends EventEmitter
     author = @robot.brain.userForId author_id
     author.room = conversation_id
     author.reply_to = author_id
-    
-    @emit 'gotMessage', author, message
 
+    @emit 'gotMessage', author, message
 
   poll: =>
     @robot.logger.debug 'Starting long poll request'
@@ -167,3 +173,8 @@ module.exports = class FleepClient extends EventEmitter
     @robot.logger.debug "Changing bot nick"
     @post 'account/configure', {display_name: @name}, (err, resp) ->
       @robot.logger.debug resp
+
+    # Fetch contact info
+    @robot.logger.debug "Syncing contacts"
+    @post 'contact/sync/all', {ignore: []}, (err, resp) =>
+      @handleStreamEvent contact for contact in resp.contacts
