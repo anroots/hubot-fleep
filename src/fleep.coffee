@@ -40,11 +40,14 @@ class Fleep extends Adapter
 
     @robot.logger.info 'Starting Hubot with the Fleep.io adapter...'
     @options = Util.parseOptions()
-    @robot.logger.debug 'Adapter options:'
-    @robot.logger.debug @options
 
-    return @robot.logger.emergency 'Specify Fleep email' unless @options.email
-    return @robot.logger.emergency 'Specify Fleep password' unless @options.password
+    # Check that Fleep account details have been provided
+    unless @options.email?
+      @robot.logger.emergency 'You must specify HUBOT_FLEEP_EMAIL'
+      process.exit(1)
+    unless @options.password?
+      @robot.logger.emergency 'You must specify HUBOT_FLEEP_PASSWORD'
+      process.exit(1)
 
     @fleepClient = new FleepClient {name: @robot.name}, @robot
     
