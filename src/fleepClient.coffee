@@ -121,7 +121,8 @@ module.exports = class FleepClient extends EventEmitter
 
     # Ignore messages without the 'message' key - some invalid state
     if not event.message?
-      @robot.logger.error 'Invalid API response from the server!'
+      @robot.logger.error 'Invalid API response from the server!' +
+      ' Expected a "message" key.'
       return
 
     message = event.message.replace(/(<([^>]+)>)/ig,"")

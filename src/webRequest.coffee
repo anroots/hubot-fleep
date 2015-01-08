@@ -90,7 +90,7 @@ module.exports = class WebRequest extends EventEmitter
   
     request.end body, 'binary'
   
-    request.on 'error', (err) ->
+    request.on 'error', (err) =>
       @logger.error 'HTTPS request error:', err
       @logger.error err.stack
       callback? err
