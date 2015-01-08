@@ -3,7 +3,7 @@
 [Hubot](https://github.com/github/hubot) adapter for [Fleep.io](http://fleep.io).
 Enables to add a Hubot bot to Fleep.io conversations.
 
-[![Build Status](https://travis-ci.org/anroots/hubot-fleep.svg)](https://travis-ci.org/anroots/hubot-fleep)
+[![Build Status](https://img.shields.io/travis/anroots/hubot-fleep.svg)](https://travis-ci.org/anroots/hubot-fleep)
 [![Downloads](https://img.shields.io/npm/dm/hubot-fleep.svg)](https://www.npmjs.com/package/hubot-fleep)
 [![Version](https://img.shields.io/npm/v/hubot-fleep.svg)](https://github.com/anroots/hubot-fleep/releases)
 [![Licence](https://img.shields.io/npm/l/express.svg)](https://github.com/anroots/hubot-fleep/blob/master/LICENSE)
