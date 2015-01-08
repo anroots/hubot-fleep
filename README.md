@@ -3,7 +3,10 @@
 [Hubot](https://github.com/github/hubot) adapter for [Fleep.io](http://fleep.io).
 Enables to add a Hubot bot to Fleep.io conversations.
 
-![Build Status](https://travis-ci.org/anroots/hubot-fleep.svg)
+[![Build Status](https://travis-ci.org/anroots/hubot-fleep.svg)](https://travis-ci.org/anroots/hubot-fleep)
+[![Downloads](https://img.shields.io/npm/dm/hubot-fleep.svg)](https://www.npmjs.com/package/hubot-fleep)
+[![Version](https://img.shields.io/npm/v/hubot-fleep.svg)](https://github.com/anroots/hubot-fleep/releases)
+[![Licence](https://img.shields.io/npm/l/express.svg)](https://github.com/anroots/hubot-fleep/blob/master/LICENSE)
 
 The adapter is in alpha status: it works for straightforward usage, but contains yet-to-be-discovered bugs. See the Issues tab for a list of known bugs and create a new issue if you discover something new.
 
@@ -33,4 +36,4 @@ You can contribute to the development of this adapter by sending pull requests a
 
 # Licence
 
-The MIT License (MIT)
+The MIT License (MIT). Please see LICENCE file for more information.
