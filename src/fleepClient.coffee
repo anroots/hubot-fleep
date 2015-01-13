@@ -55,7 +55,7 @@ module.exports = class FleepClient extends EventEmitter
       @profile.display_name = resp.display_name
 
       # Tell Hubot we're connected so it can load scripts
-      @robot.logger.info "Successfully connected Bot #{@options.name} with Fleep"
+      @robot.logger.info "Successfully connected #{@options.name} with Fleep"
       @emit 'connected'
 
   logout: ->
@@ -167,7 +167,7 @@ module.exports = class FleepClient extends EventEmitter
 
   markRead: (conversation_id, message_nr) =>
     return unless @options.markSeen
-    
+
     @robot.logger.debug "Marking message #{message_nr} of conversation " +
     "#{conversation_id} as read"
     @post "message/mark_read/#{conversation_id}", {

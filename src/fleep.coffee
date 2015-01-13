@@ -51,7 +51,10 @@ class Fleep extends Adapter
       @robot.logger.emergency 'You must specify HUBOT_FLEEP_PASSWORD'
       process.exit(1)
 
-    @fleepClient = new FleepClient {name: @robot.name, markSeen: @options.markSeen}, @robot
+    @fleepClient = new FleepClient {
+      name: @robot.name,
+      markSeen: @options.markSeen
+      }, @robot
     
     @fleepClient.on 'connected', =>
       @robot.logger.debug 'Connected, syncing...'
