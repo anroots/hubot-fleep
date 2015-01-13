@@ -21,10 +21,8 @@ class Fleep extends Adapter
     for message in strings
       @fleepClient.reply message, envelope
 
-  topic: (params, strings...) ->
-    @robot.logger.info 'Hubot: changing topic'
-    @fleepClient.topic params.room, strings[0]
-
+  topic: (envelope, strings...) ->
+    @fleepClient.topic envelope.room, strings.toString()
 
   # Public: Dispatch a received message to the robot.
   #
