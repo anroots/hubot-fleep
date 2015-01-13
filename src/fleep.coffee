@@ -11,10 +11,12 @@ class Fleep extends Adapter
   constructor: (robot) ->
     super robot
 
+  # Send a message to the chat room where the envelope originated
   send: (envelope, strings...) ->
-    message = strings[0]
-    @robot.logger.info 'Sending Hubot message: '+message
-    @fleepClient.send message, envelope.room
+    for message in strings
+      @robot.logger.info 'Sending Hubot message: '+message
+      @fleepClient.send message, envelope.room
+  
 
   topic: (params, strings...) ->
     @robot.logger.info 'Hubot: changing topic'

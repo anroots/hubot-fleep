@@ -98,7 +98,7 @@ module.exports = class FleepClient extends EventEmitter
     # Skip everything but text message events
     if event.mk_rec_type isnt 'message'
       @robot.logger.debug 'Skipping stream item ' +
-      event.mk_rec_type + ', not a messag-e type of event'
+      event.mk_rec_type + ', not a message type of event'
       return
 
     # Detected a new conversation
