@@ -89,10 +89,14 @@ module.exports = class FleepClient extends EventEmitter
     if event.mk_rec_type is 'contact'
       user = @robot.brain.userForId event.account_id
 
-      # Only save the contact name if it's currently unknown
+      # Save the contact name if it's currently unknown
       if not user.name? or user.name is user.id
         user.name = event.display_name
         @robot.logger.debug "New contact: id #{user.id}, name #{user.name}"
+
+      if not user.email? and event.email?
+        user.email = event.email
+
       return
 
     # Skip everything but text message events
@@ -147,10 +151,20 @@ module.exports = class FleepClient extends EventEmitter
     @post 'account/poll', data, (err, resp) =>
       @emit 'pollcomplete', resp
 
-  send: (message, conversation_id) =>
-    @robot.logger.debug 'Sending new message to conversation ' + conversation_id
-    @post "message/send/#{conversation_id}", {message: message}, (err, resp) ->
-      @robot.logger.debug resp
+  send: (message, envelope) =>
+    @robot.logger.debug 'Sending new message to conversation ' + envelope.room
+    @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
+      @robot.logger.debug 'Callback for send called'
+
+  reply: (message, envelope) ->
+    @robot.logger.debug 'Sending private message to user ' + envelope.user.id
+    @post 'conversation/create', {
+      topic: null, # Topic is currently empty, the default is the bot's name
+      emails:envelope.user.email,
+      message: message
+    }, (err, resp) ->
+      @robot.logger.debug 'Callback for reply called'
+
 
   markRead: (conversation_id, message_nr) =>
     @robot.logger.debug "Marking message #{message_nr} of conversation " +

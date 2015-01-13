@@ -14,9 +14,12 @@ class Fleep extends Adapter
   # Send a message to the chat room where the envelope originated
   send: (envelope, strings...) ->
     for message in strings
-      @robot.logger.info 'Sending Hubot message: '+message
-      @fleepClient.send message, envelope.room
+      @fleepClient.send message, envelope
   
+  # Send a 1:1 message to the user who sent the envelope
+  reply: (envelope, strings...) ->
+    for message in strings
+      @fleepClient.reply message, envelope
 
   topic: (params, strings...) ->
     @robot.logger.info 'Hubot: changing topic'
