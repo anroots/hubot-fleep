@@ -5,10 +5,9 @@ Util = require './util'
 
 module.exports = class FleepClient extends EventEmitter
   
-  constructor: (options, @robot) ->
+  constructor: (@options, @robot) ->
     
     @conversations = []
-    @name = options.name
     
     @ticket = null
     @token_id = null
@@ -56,7 +55,7 @@ module.exports = class FleepClient extends EventEmitter
       @profile.display_name = resp.display_name
 
       # Tell Hubot we're connected so it can load scripts
-      @robot.logger.info "Successfully connected Bot #{@name} with Fleep"
+      @robot.logger.info "Successfully connected #{@options.name} with Fleep"
       @emit 'connected'
 
   logout: ->
@@ -89,16 +88,20 @@ module.exports = class FleepClient extends EventEmitter
     if event.mk_rec_type is 'contact'
       user = @robot.brain.userForId event.account_id
 
-      # Only save the contact name if it's currently unknown
+      # Save the contact name if it's currently unknown
       if not user.name? or user.name is user.id
         user.name = event.display_name
         @robot.logger.debug "New contact: id #{user.id}, name #{user.name}"
+
+      if not user.email? and event.email?
+        user.email = event.email
+
       return
 
     # Skip everything but text message events
     if event.mk_rec_type isnt 'message'
       @robot.logger.debug 'Skipping stream item ' +
-      event.mk_rec_type + ', not a messag-e type of event'
+      event.mk_rec_type + ', not a message type of event'
       return
 
     # Detected a new conversation
@@ -147,12 +150,24 @@ module.exports = class FleepClient extends EventEmitter
     @post 'account/poll', data, (err, resp) =>
       @emit 'pollcomplete', resp
 
-  send: (message, conversation_id) =>
-    @robot.logger.debug 'Sending new message to conversation ' + conversation_id
-    @post "message/send/#{conversation_id}", {message: message}, (err, resp) ->
-      @robot.logger.debug resp
+  send: (message, envelope) =>
+    @robot.logger.debug 'Sending new message to conversation ' + envelope.room
+    @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
+      @robot.logger.debug 'Callback for send called'
+
+  reply: (message, envelope) ->
+    @robot.logger.debug 'Sending private message to user ' + envelope.user.id
+    @post 'conversation/create', {
+      topic: null, # Topic is currently empty, the default is the bot's name
+      emails:envelope.user.email,
+      message: message
+    }, (err, resp) ->
+      @robot.logger.debug 'Callback for reply called'
+
 
   markRead: (conversation_id, message_nr) =>
+    return unless @options.markSeen
+
     @robot.logger.debug "Marking message #{message_nr} of conversation " +
     "#{conversation_id} as read"
     @post "message/mark_read/#{conversation_id}", {
@@ -176,7 +191,7 @@ module.exports = class FleepClient extends EventEmitter
       @emit 'synced'
     
     @robot.logger.debug "Changing bot nick"
-    @post 'account/configure', {display_name: @name}, (err, resp) ->
+    @post 'account/configure', {display_name: @options.name}, (err, resp) ->
       @robot.logger.debug resp
 
     # Fetch contact info

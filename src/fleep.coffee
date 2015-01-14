@@ -11,15 +11,18 @@ class Fleep extends Adapter
   constructor: (robot) ->
     super robot
 
+  # Send a message to the chat room where the envelope originated
   send: (envelope, strings...) ->
-    message = strings[0]
-    @robot.logger.info 'Sending Hubot message: '+message
-    @fleepClient.send message, envelope.room
+    for message in strings
+      @fleepClient.send message, envelope
+  
+  # Send a 1:1 message to the user who sent the envelope
+  reply: (envelope, strings...) ->
+    for message in strings
+      @fleepClient.reply message, envelope
 
-  topic: (params, strings...) ->
-    @robot.logger.info 'Hubot: changing topic'
-    @fleepClient.topic params.room, strings[0]
-
+  topic: (envelope, strings...) ->
+    @fleepClient.topic envelope.room, strings.toString()
 
   # Public: Dispatch a received message to the robot.
   #
@@ -46,7 +49,10 @@ class Fleep extends Adapter
       @robot.logger.emergency 'You must specify HUBOT_FLEEP_PASSWORD'
       process.exit(1)
 
-    @fleepClient = new FleepClient {name: @robot.name}, @robot
+    @fleepClient = new FleepClient {
+      name: @robot.name,
+      markSeen: @options.markSeen
+      }, @robot
     
     @fleepClient.on 'connected', =>
       @robot.logger.debug 'Connected, syncing...'
