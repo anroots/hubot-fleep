@@ -24,14 +24,28 @@ module.exports = class FleepClient extends EventEmitter
 
     
   post: (path, body = {}, callback) ->
-    request = new WebRequest(@robot.logger)
-    request.post path, body, callback, @ticket, @token_id
+    request = new WebRequest(@robot.logger, @ticket, @token_id)
+    request.post path, body, callback
 
   getLastEventHorizon: ->
     last = @robot.brain.get 'fleep_last_horizon'
     @robot.logger.debug 'Last event horizon from robot brain: '+last
     last or 0
-    
+  
+  postImageFromUri: (envelope, uri) ->
+    @robot.logger.debug 'Uploading image from URI ' + uri
+
+    request = new WebRequest @robot.logger, @ticket, @token_id
+    callbackfunc = (err, resp) =>
+
+      fileUrl = resp.files[0].upload_url
+          
+      @post "message/send/#{envelope.room}", {
+        message: uri,attachments:[fileUrl]
+        }, (err, resp) ->
+        @robot.logger.debug resp
+    request.uploadImage uri, callbackfunc
+
   setLastEventHorizon: (horizon) ->
     @robot.brain.set 'fleep_last_horizon', horizon
 
@@ -150,8 +164,15 @@ module.exports = class FleepClient extends EventEmitter
     @post 'account/poll', data, (err, resp) =>
       @emit 'pollcomplete', resp
 
-  send: (message, envelope) =>
+  send: (envelope, message) =>
     @robot.logger.debug 'Sending new message to conversation ' + envelope.room
+
+    # If the message is an image link and image upload is enabled,
+    # upload the image to Fleep and post a message with the link
+    if @options.uploadImages and Util.isImageUri message
+      @postImageFromUri envelope, message
+      return
+
     @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
       @robot.logger.debug 'Callback for send called'
 

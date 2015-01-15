@@ -14,7 +14,7 @@ class Fleep extends Adapter
   # Send a message to the chat room where the envelope originated
   send: (envelope, strings...) ->
     for message in strings
-      @fleepClient.send message, envelope
+      @fleepClient.send envelope, message
   
   # Send a 1:1 message to the user who sent the envelope
   reply: (envelope, strings...) ->
@@ -48,10 +48,11 @@ class Fleep extends Adapter
     unless @options.password?
       @robot.logger.emergency 'You must specify HUBOT_FLEEP_PASSWORD'
       process.exit(1)
-
+    
     @fleepClient = new FleepClient {
       name: @robot.name,
-      markSeen: @options.markSeen
+      markSeen: @options.markSeen,
+      uploadImages: @options.uploadImages
       }, @robot
     
     @fleepClient.on 'connected', =>

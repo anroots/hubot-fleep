@@ -1,5 +1,8 @@
 
 https = require 'https'
+url = require 'url'
+http = require 'http'
+path = require 'path'
 
 {EventEmitter} = require 'events'
 
@@ -7,17 +10,19 @@ Util = require './util'
 
 module.exports = class WebRequest extends EventEmitter
 
-  constructor: (@logger) ->
+  constructor: (@logger, @ticket, @token_id) ->
     super
 
-  prepareReqOptions: (path, body, ticket, token_id) ->
+  prepareReqOptions: (path, body = {}, headers = {}) ->
     host = 'fleep.io'
-    headers =
+    headers = Util.merge {
       Host: host
-      'User-Agent': 'hubot-fleep'
-  
-    if token_id?
-      cookie = 'token_id='+token_id
+      'User-Agent': 'hubot-fleep',
+      'Content-Type': 'application/json'
+    }, headers
+
+    if @token_id?
+      cookie = 'token_id='+@token_id
       @logger.debug "Setting cookie: #{cookie}"
       headers['Cookie'] = cookie
       
@@ -29,25 +34,25 @@ module.exports = class WebRequest extends EventEmitter
       method   : 'POST'
       headers  : headers
       
-    if ticket?
-      @logger.debug "Setting ticket: #{ticket}"
-      body.ticket = ticket
-        
-    @logger.debug 'Request body:'
-    @logger.debug body
-        
-    body = new Buffer JSON.stringify(body)
-        
-    reqOptions.headers['Content-Type'] = 'application/json'
+    if @ticket?
+      @logger.debug "Setting ticket: #{@ticket}"
+      body.ticket = @ticket
+    
+    # Encode JSON request body into a string format.
+    # Only do this if it's not a file upload request
+    unless headers['Content-Disposition']?
+      body = new Buffer JSON.stringify(body)
+
+    
     reqOptions.headers['Content-Length'] = body.length
 
     [reqOptions, body]
 
 
-  post: (path, body, callback, ticket, token_id) ->
+  post: (path, body, callback, headers = {}) ->
     @logger.debug 'Sending new POST request'
 
-    [reqOptions, body] = this.prepareReqOptions path, body, ticket, token_id
+    [reqOptions, body] = this.prepareReqOptions path, body, headers
 
     @logger.debug 'Request options:'
     @logger.debug reqOptions
@@ -64,6 +69,7 @@ module.exports = class WebRequest extends EventEmitter
         if response.statusCode >= 400
           @logger.error "Fleep API error : #{response.statusCode}"
           @logger.error data
+          return
   
         @logger.debug 'Response headers:'
         @logger.debug response.headers
@@ -77,9 +83,9 @@ module.exports = class WebRequest extends EventEmitter
 
         if response.headers['set-cookie']? and
         response.headers['set-cookie'][0]?
-          token_id = this.getCookie response.headers['set-cookie'][0]
-          @logger.debug 'Saving cookie value for later use: token_id='+token_id
-          metaData['token_id'] = token_id
+          @token_id = this.getCookie response.headers['set-cookie'][0]
+          @logger.debug 'Saving cookie value for later use: token_id='+@token_id
+          metaData['token_id'] = @token_id
           
         @logger.debug 'Calling callback of request '+reqOptions.path
         callback? null, data, metaData
@@ -96,6 +102,34 @@ module.exports = class WebRequest extends EventEmitter
       callback? err
 
   
+  uploadImage: (uri, callbackfunc) ->
+    
+    # Parse uri to it's components
+    # See http://nodejs.org/api/url.html
+    urlParts = url.parse uri, true
+    
+    http.get {host : urlParts.host, path: urlParts.path}, (resp) =>
+
+      resp.setEncoding 'binary'
+      imageData = ''
+
+      resp.on 'data', (chunk) ->
+        imageData += chunk
+      
+      resp.on 'end', =>
+        
+        request = new WebRequest(@logger, @ticket, @token_id)
+  
+        fileName = path.basename urlParts.path
+        headers =
+          'Content-Type': resp.headers['content-type'],
+          'Content-Disposition' : "attachment; filename=#{fileName};"
+
+        request.post(
+          'file/upload?ticket='+@ticket+'&_method=PUT',
+          imageData,
+          callbackfunc,
+          headers)
 
   getCookie: (header) ->
     @logger.debug 'Parsing cookie string ' + header
