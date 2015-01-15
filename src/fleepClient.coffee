@@ -41,7 +41,8 @@ module.exports = class FleepClient extends EventEmitter
       fileUrl = resp.files[0].upload_url
           
       @post "message/send/#{envelope.room}", {
-        message: uri,attachments:[fileUrl]
+        message: uri+'<<(link to source)>>',
+        attachments: [fileUrl]
         }, (err, resp) ->
         @robot.logger.debug resp
     request.uploadImage uri, callbackfunc
