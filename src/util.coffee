@@ -2,7 +2,7 @@ module.exports = class Util
 
   # Return true if uri string is a URI to an image
   @isImageUri: (uri) ->
-    uri.match(/^https?\:\/\/.*\.(jpeg|jpg|gif|png)$/i)?
+    uri.match(/^https?\:\/\/.*[\.|=](jpeg|jpg|gif|png)$/i)?
 
   # Merge input objects into one object
   @merge = (xs...) ->
@@ -11,7 +11,7 @@ module.exports = class Util
       tap {}, (m) -> m[k] = v for k, v of x for x in xs
  
   @parseOptions: ->
-  	
+    
     getOpt = (name, defaultValue) ->
       return defaultValue unless process.env['HUBOT_FLEEP_' + name]?
       return process.env['HUBOT_FLEEP_' + name]
