@@ -120,7 +120,7 @@ module.exports = class WebRequest extends EventEmitter
         
         request = new WebRequest(@logger, @ticket, @token_id)
   
-        fileName = path.basename urlParts.path
+        fileName = path.basename(urlParts.path).replace /[^0-9a-zA-Z.\-_]/g, '.'
         headers =
           'Content-Type': resp.headers['content-type'],
           'Content-Disposition' : "attachment; filename=#{fileName};"
