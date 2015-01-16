@@ -1,6 +1,6 @@
 {
   "name":        "hubot-fleep",
-  "version":     "0.3.1",
+  "version":     "0.5.0",
   "author":      "Ando Roots <ando@sqroot.eu>",
   "keywords":    ["github","hubot","fleep","adapter"],
   "description": "Fleep.io adapter for Hubot",
@@ -17,10 +17,12 @@
   },
   "main": "./src/fleep",
   "engine": {
-    "node": ">= 0.4.7"
+    "node": ">= 0.9"
   },
   "devDependencies": {
     "coffee-script": "latest",
-    "coffeelint": "latest"
+    "coffeelint": "latest",
+    "mocha": "^2.1",
+    "chai": "^1.10"
   }
 }
