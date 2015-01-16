@@ -15,6 +15,9 @@
   "dependencies": {
     
   },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register"
+  },
   "main": "./src/fleep",
   "engine": {
     "node": ">= 0.9"
