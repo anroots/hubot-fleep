@@ -71,9 +71,6 @@ module.exports = class WebRequest extends EventEmitter
           @logger.error data
           return
   
-        @logger.debug 'Response headers:'
-        @logger.debug response.headers
-          
         data = JSON.parse data
 
         @logger.debug 'HTTPS response body:'
