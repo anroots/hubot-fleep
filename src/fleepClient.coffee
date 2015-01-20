@@ -151,9 +151,10 @@ module.exports = class FleepClient extends EventEmitter
 
     @handleMessage event
 
-  # Determines whether a particular message in a particular message has been seen
+  # Determines whether a particular message in
+  # a particular message has been seen
   isMessageSeen: (conversation_id, message_nr) =>
-    seen = @getKnownConversations()?[conversation_id]?['last_message_nr'] >= message_nr
+    @getKnownConversations()?[conversation_id]?['last_message_nr'] >= message_nr
 
   # Parses an incoming message and passes it to Hubot
   # Message is a Fleep event response object
@@ -240,9 +241,9 @@ module.exports = class FleepClient extends EventEmitter
       unless resp.conversations? and resp.conversations.length
         return
 
-      for conversation in resp.conversations
-        unless @getKnownConversations()?[conversation.conversation_id]?
-          @saveConversation conversation.conversation_id, conversation.last_message_nr
+      for conv in resp.conversations
+        unless @getKnownConversations()?[conv.conversation_id]?
+          @saveConversation conv.conversation_id, conv.last_message_nr
       @robot.logger.debug 'Conversation list synced'
       cb()
 
