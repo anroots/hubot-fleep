@@ -13,7 +13,7 @@
     "url" : "https://github.com/anroots/hubot-fleep.git"
   },
   "dependencies": {
-    
+    "async": "^0.2.5"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register"

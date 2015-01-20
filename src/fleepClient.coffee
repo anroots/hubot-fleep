@@ -2,13 +2,12 @@
 
 WebRequest = require './webRequest'
 Util = require './util'
+async = require 'async'
 
 module.exports = class FleepClient extends EventEmitter
-  
+
   constructor: (@options, @robot) ->
-    
-    @conversations = []
-    
+
     @ticket = null
     @token_id = null
 
@@ -22,7 +21,6 @@ module.exports = class FleepClient extends EventEmitter
       @robot.logger.debug 'Sending new poll request'
       @poll()
 
-    
   post: (path, body = {}, callback) ->
     request = new WebRequest(@robot.logger, @ticket, @token_id)
     request.post path, body, callback
@@ -88,6 +86,13 @@ module.exports = class FleepClient extends EventEmitter
       resp.event_horizon
     @robot.logger.debug 'Finished handling long poll response'
 
+  # Save the conversation into the internal "known conversations" list
+  # The message number indicates the last known seen message
+  saveConversation: (conversation_id, message_nr) =>
+    conversations = @getKnownConversations()
+    conversations[conversation_id] = {last_message_nr:message_nr}
+    @robot.brain.set 'conversations', conversations
+    @markRead conversation_id, message_nr
 
   # Processes a single Event object in a list of Fleep events
   handleStreamEvent: (event) =>
@@ -120,11 +125,12 @@ module.exports = class FleepClient extends EventEmitter
       return
 
     # Detected a new conversation
-    if event.conversation_id not in @conversations
+    unless @getKnownConversations()?[event.conversation_id]?
       @robot.logger.debug "New conversation! Conversation " +
       "#{event.conversation_id} was not in the list of monitored " +
       "conversations, adding it now"
-      @conversations.push event.conversation_id
+      @saveConversation event.conversation_id, event.message_nr
+      return
     
     # This message is an echo of our own message, ignore
     if event.account_id is @profile.account_id
@@ -143,18 +149,32 @@ module.exports = class FleepClient extends EventEmitter
       ' Expected a "message" key.'
       return
 
-    message = event.message.replace(/(<([^>]+)>)/ig,"")
-    @markRead event.conversation_id, event.message_nr
-    @handleMessage message, event.account_id, event.conversation_id
-    
-  handleMessage: (message, author_id, conversation_id) =>
+    @handleMessage event
+
+  # Determines whether a particular message in a particular message has been seen
+  isMessageSeen: (conversation_id, message_nr) =>
+    seen = @getKnownConversations()?[conversation_id]?['last_message_nr'] >= message_nr
+
+  # Parses an incoming message and passes it to Hubot
+  # Message is a Fleep event response object
+  handleMessage: (message) =>
+
+    # Do nothing if the message is already seen
+    return if @isMessageSeen message.conversation_id, message.message_nr
+
+    # Strip HTML tags
+    text = message.message.replace(/(<([^>]+)>)/ig,"")
+
+    # Mark message as read
+    @markRead message.conversation_id, message.message_nr
+
     @robot.logger.info 'Got message: ' + message
 
-    author = @robot.brain.userForId author_id
-    author.room = conversation_id
-    author.reply_to = author_id
+    author = @robot.brain.userForId message.account_id
+    author.room = message.conversation_id
+    author.reply_to = message.account_id
 
-    @emit 'gotMessage', author, message
+    @emit 'gotMessage', author, text
 
   poll: =>
     @robot.logger.debug 'Starting long poll request'
@@ -186,8 +206,17 @@ module.exports = class FleepClient extends EventEmitter
     }, (err, resp) ->
       @robot.logger.debug 'Callback for reply called'
 
+  # Get a hash of known conversations
+  getKnownConversations: =>
+    @robot.brain.get('conversations') ? {}
 
   markRead: (conversation_id, message_nr) =>
+
+    # Save the last message number into an internal tracker
+    conversations = @robot.brain.get 'conversations'
+    conversations[conversation_id]['last_message_nr'] = message_nr
+    @robot.brain.set 'conversations', conversations
+
     return unless @options.markSeen
 
     @robot.logger.debug "Marking message #{message_nr} of conversation " +
@@ -205,18 +234,51 @@ module.exports = class FleepClient extends EventEmitter
       }, (err,resp) ->
       @robot.logger.debug resp
 
-  sync:  =>
-    @robot.logger.debug "Syncing..."
-    @post 'account/sync', {}, (err, resp) =>
-      @robot.logger.debug 'Syncing conversation response'
-      @setLastEventHorizon resp.event_horizon
-      @emit 'synced'
-    
-    @robot.logger.debug "Changing bot nick"
-    @post 'account/configure', {display_name: @options.name}, (err, resp) ->
-      @robot.logger.debug resp
+  # Syncs the list of known conversations
+  populateConversationList: (cb) =>
+    @post 'conversation/list', {sync_horizon: 0}, (err, resp) =>
+      unless resp.conversations? and resp.conversations.length
+        return
 
-    # Fetch contact info
-    @robot.logger.debug "Syncing contacts"
+      for conversation in resp.conversations
+        unless @getKnownConversations()?[conversation.conversation_id]?
+          @saveConversation conversation.conversation_id, conversation.last_message_nr
+      @robot.logger.debug 'Conversation list synced'
+      cb()
+
+  # Sync last seen event horizon
+  syncEventHorizon: (cb) =>
+    @post 'account/sync', {}, (err, resp) =>
+      @setLastEventHorizon resp.event_horizon
+      @robot.logger.debug 'Event horizon synced'
+      cb()
+
+  # Change the Fleep user name to the Bot name
+  changeNick: (cb) =>
+    @post 'account/configure', {display_name: @options.name}, (err, resp) =>
+      @robot.logger.debug resp
+      @robot.logger.debug 'Nick changed'
+      cb()
+
+  # Sync the list of known contacts
+  syncContacts: (cb) =>
     @post 'contact/sync/all', {ignore: []}, (err, resp) =>
       @handleStreamEvent contact for contact in resp.contacts
+      @robot.logger.debug 'Contacts in sync'
+      cb()
+
+  sync:  =>
+
+    @robot.logger.debug "Syncing..."
+
+    # Does synchronization operations in parallel
+    # Calls the callback function only if all operations are complete
+    async.parallel [
+      (cb) => @populateConversationList cb,
+      (cb) => @syncEventHorizon cb,
+      (cb) => @changeNick cb,
+      (cb) => @syncContacts cb
+    ], (err, results) =>
+      @robot.logger.debug 'Everything synced, ready to go!'
+      @emit('synced')
+
