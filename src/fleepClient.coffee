@@ -169,7 +169,7 @@ module.exports = class FleepClient extends EventEmitter
     # Mark message as read
     @markRead message.conversation_id, message.message_nr
 
-    @robot.logger.info 'Got message: ' + message
+    @robot.logger.info 'Got message: ' + JSON.stringify message
 
     author = @robot.brain.userForId message.account_id
     author.room = message.conversation_id
@@ -189,14 +189,25 @@ module.exports = class FleepClient extends EventEmitter
   send: (envelope, message) =>
     @robot.logger.debug 'Sending new message to conversation ' + envelope.room
 
+    normalMessageCallback = (message) =>
+      @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
+        @robot.logger.debug 'Callback for send called'
+
+    imageCallback = (isImage) =>
+      if isImage
+        @postImageFromUri envelope, message
+      else
+        normalMessageCallback message
+
     # If the message is an image link and image upload is enabled,
     # upload the image to Fleep and post a message with the link
-    if @options.uploadImages and Util.isImageUri message
-      @postImageFromUri envelope, message
+
+    if @options.uploadImages
+      Util.isImageUri message, imageCallback
       return
 
-    @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
-      @robot.logger.debug 'Callback for send called'
+    normalMessageCallback message
+
 
   reply: (message, envelope) ->
     @robot.logger.debug 'Sending private message to user ' + envelope.user.id

@@ -3,6 +3,7 @@ https = require 'https'
 url = require 'url'
 http = require 'http'
 path = require 'path'
+mime = require 'mime-types'
 
 {EventEmitter} = require 'events'
 
@@ -17,7 +18,7 @@ module.exports = class WebRequest extends EventEmitter
     host = 'fleep.io'
     headers = Util.merge {
       Host: host
-      'User-Agent': 'hubot-fleep',
+      'User-Agent': 'hubot-fleep/0.6',
       'Content-Type': 'application/json'
     }, headers
 
@@ -117,7 +118,11 @@ module.exports = class WebRequest extends EventEmitter
         
         request = new WebRequest(@logger, @ticket, @token_id)
   
-        fileName = path.basename(urlParts.path).replace /[^0-9a-zA-Z.\-_]/g, '.'
+        fileName = path.basename(urlParts.path).replace /[^0-9a-zA-Z.\-_]/g, '_'
+
+        # Fleep requires valid file extension
+        fileName = fileName + '.' + mime.extension resp.headers['content-type']
+
         headers =
           'Content-Type': resp.headers['content-type'],
           'Content-Disposition' : "attachment; filename=#{fileName};"
