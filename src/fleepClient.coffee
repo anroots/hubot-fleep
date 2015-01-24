@@ -1,4 +1,5 @@
 {EventEmitter} = require 'events'
+{TextMessage} = require 'hubot'
 
 WebRequest = require './webRequest'
 Util = require './util'
@@ -73,7 +74,7 @@ module.exports = class FleepClient extends EventEmitter
 
       # Tell Hubot we're connected so it can load scripts
       @robot.logger.info "Successfully connected #{@options.name} with Fleep"
-      @emit 'connected'
+      @emit 'authenticated', @
 
   logout: ->
     @post 'account/logout', {}, (err, resp) ->
@@ -179,7 +180,8 @@ module.exports = class FleepClient extends EventEmitter
     author.room = message.conversation_id
     author.reply_to = message.account_id
 
-    @emit 'gotMessage', author, text
+    textMessage = new TextMessage author, text
+    @emit 'gotMessage', textMessage
 
   poll: =>
     @robot.logger.debug 'Starting long poll request'
@@ -213,7 +215,7 @@ module.exports = class FleepClient extends EventEmitter
     normalMessageCallback message
 
 
-  reply: (message, envelope) ->
+  reply: (envelope, message) ->
     @robot.logger.debug 'Sending private message to user ' + envelope.user.id
     @post 'conversation/create', {
       topic: null, # Topic is currently empty, the default is the bot's name
@@ -296,5 +298,5 @@ module.exports = class FleepClient extends EventEmitter
       (cb) => @syncContacts cb
     ], (err, results) =>
       @robot.logger.debug 'Everything synced, ready to go!'
-      @emit('synced')
+      @emit 'synced', @
 
