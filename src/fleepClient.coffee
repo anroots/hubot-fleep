@@ -12,6 +12,7 @@ module.exports = class FleepClient extends EventEmitter
     @ticket = null
     @token_id = null
 
+    # Fleep profile info for the bot user
     @profile =
       account_id : null,
       display_name : null
@@ -19,11 +20,11 @@ module.exports = class FleepClient extends EventEmitter
     @on 'pollcomplete', (resp) =>
       @robot.logger.debug 'Poll complete'
       @handleStreamEvents resp
-      @robot.logger.debug 'Sending new poll request'
       @poll()
 
-  post: (path, body = {}, callback) ->
-    request = new WebRequest(@robot.logger, @ticket, @token_id)
+  # Send a POST request to Fleep
+  post: (path, body = {}, callback = ->) ->
+    request = new WebRequest @robot.logger, @ticket, @token_id
     request.post path, body, (error, response, metaData) =>
 
       if response.ticket?
@@ -36,15 +37,18 @@ module.exports = class FleepClient extends EventEmitter
 
       callback error, response, metaData
 
+  # Return the ID of the last seen Fleep event horizon
   getLastEventHorizon: ->
     last = @robot.brain.get 'fleep_last_horizon'
     @robot.logger.debug 'Last event horizon from robot brain: '+last
     last or 0
 
-
+  # Set the last seen Fleep event horizon to robot brain
   setLastEventHorizon: (horizon) ->
     @robot.brain.set 'fleep_last_horizon', horizon
 
+  # Login to Fleep with the specified email and password
+  # Creates a new session with Fleep and sets the token_id and ticket vars
   login: (email, password) =>
     @robot.logger.debug 'Attempting to log in...'
 
@@ -57,6 +61,7 @@ module.exports = class FleepClient extends EventEmitter
         @robot.logger.emergency 'Unable to login to Fleep: ' + err.error_message
         process.exit 1
 
+      # Save Fleep profile info
       @profile.account_id = resp.account_id
       @profile.display_name = resp.display_name
 
@@ -64,19 +69,29 @@ module.exports = class FleepClient extends EventEmitter
       @robot.logger.info "Successfully connected #{@options.name} with Fleep"
       @emit 'authenticated', @
 
+  # Destroy Fleep session
   logout: ->
     @post 'account/logout', {}, (err, resp) ->
+      if err isnt null
+        return @robot.logger.error 'Unable to destroy Fleep session'
       @robot.logger.debug 'User session with Fleep closed.'
 
+  # The result of a long poll request to account/poll is passed here
+  # Handle all of its 'stream' items (conversations, contacts...) ie
+  # events that happened during the poll request
   handleStreamEvents: (resp) =>
+
+    # The poll response gives us our next "last seen" event horizon
+    if resp.event_horizon?
+      @setLastEventHorizon resp.event_horizon
+      @robot.logger.debug 'Updating last seen event horizon to '+
+        resp.event_horizon
+
+    # Handle stream items individually
     if resp.stream? and resp.stream.length
       @handleStreamEvent event for event in resp.stream
     else
       @robot.logger.debug 'Response stream length 0, nothing to parse.'
-    if resp.event_horizon?
-      @setLastEventHorizon resp.event_horizon
-      @robot.logger.debug 'Updating last seen event horizon to '+
-      resp.event_horizon
     @robot.logger.debug 'Finished handling long poll response'
 
   # Save the conversation into the internal "known conversations" list
@@ -90,11 +105,11 @@ module.exports = class FleepClient extends EventEmitter
   # Processes a single Event object in a list of Fleep events
   handleStreamEvent: (event) =>
 
-    @robot.logger.debug event
+    @robot.logger.debug 'Handling event: '+JSON.stringify event
 
     # Event does not have a rec_type, API error?
     if not event.mk_rec_type?
-      @robot.logger.error 'Invalid response from the server'
+      @robot.logger.error 'Invalid response from the server, no rec_type'
       return
 
     # New contact information
@@ -142,6 +157,7 @@ module.exports = class FleepClient extends EventEmitter
       ' Expected a "message" key.'
       return
 
+    # Patch the received text message to Hubot
     @handleMessage event
 
   # Determines whether a particular message in
@@ -164,6 +180,7 @@ module.exports = class FleepClient extends EventEmitter
 
     @robot.logger.info 'Got message: ' + JSON.stringify message
 
+    # Create a Hubot user object
     author = @robot.brain.userForId message.account_id
     author.room = message.conversation_id
     author.reply_to = message.account_id
@@ -171,35 +188,45 @@ module.exports = class FleepClient extends EventEmitter
     textMessage = new TextMessage author, text
     @emit 'gotMessage', textMessage
 
+  # Send a new long poll request to the Fleep API
+  # The request will wait ~90 seconds
+  # If new information is available, the server will respond immediately
   poll: =>
     @robot.logger.debug 'Starting long poll request'
     data =
       wait: true,
       event_horizon: @getLastEventHorizon()
       poll_flags: ['skip_hidden']
+
     @post 'account/poll', data, (err, resp) =>
       @emit 'pollcomplete', resp
 
+  # Send a new message to Fleep
   send: (envelope, message) =>
     @robot.logger.debug 'Sending new message to conversation ' + envelope.room
 
     @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
-      @robot.logger.debug 'Callback for send called'
+      if err isnt null
+        @robot.logger.error 'Unable to send a message: '+JSON.stringify err
 
 
+  # Send a private message to a user
   reply: (envelope, message) ->
     @robot.logger.debug 'Sending private message to user ' + envelope.user.id
+
     @post 'conversation/create', {
       topic: null, # Topic is currently empty, the default is the bot's name
       emails:envelope.user.email,
       message: message
     }, (err, resp) ->
-      @robot.logger.debug 'Callback for reply called'
+      if err isnt null
+        @robot.logger.error 'Unable to send a 1:1 message: '+JSON.stringify err
 
   # Get a hash of known conversations
   getKnownConversations: =>
     @robot.brain.get('conversations') ? {}
 
+  # Mark a Fleep message as 'seen' by the bot
   markRead: (conversation_id, message_nr) =>
 
     # Save the last message number into an internal tracker
@@ -207,6 +234,7 @@ module.exports = class FleepClient extends EventEmitter
     conversations[conversation_id]['last_message_nr'] = message_nr
     @robot.brain.set 'conversations', conversations
 
+    # Do not mark it as 'seen' in Fleep if not enabled
     return unless @options.markSeen
 
     @robot.logger.debug "Marking message #{message_nr} of conversation " +
@@ -214,18 +242,19 @@ module.exports = class FleepClient extends EventEmitter
     @post "message/mark_read/#{conversation_id}", {
       message_nr: message_nr
       }, (err, resp) ->
-      @robot.logger.debug 'Message marked as read.'
+      @robot.logger.debug 'Message marked as read.' if err is null
 
+  # Change the topic of a conversation
   topic: (conversation_id, topic) =>
     @robot.logger.debug "Setting conversation #{conversation_id} "+
     "topic to #{topic}"
     @post "conversation/set_topic/#{conversation_id}", {
       topic: topic
       }, (err,resp) ->
-      @robot.logger.debug resp
+      @robot.logger.error 'Unable to set topic' if err isnt null
 
   # Syncs the list of known conversations
-  populateConversationList: (cb) =>
+  populateConversationList: (callback) =>
     @post 'conversation/list', {sync_horizon: 0}, (err, resp) =>
       unless resp.conversations? and resp.conversations.length
         return
@@ -234,29 +263,31 @@ module.exports = class FleepClient extends EventEmitter
         unless @getKnownConversations()?[conv.conversation_id]?
           @saveConversation conv.conversation_id, conv.last_message_nr
       @robot.logger.debug 'Conversation list synced'
-      cb()
+      callback()
 
   # Sync last seen event horizon
-  syncEventHorizon: (cb) =>
+  syncEventHorizon: (callback) =>
     @post 'account/sync', {}, (err, resp) =>
       @setLastEventHorizon resp.event_horizon
       @robot.logger.debug 'Event horizon synced'
-      cb()
+      callback()
 
   # Change the Fleep user name to the Bot name
-  changeNick: (cb) =>
+  changeNick: (callback) =>
     @post 'account/configure', {display_name: @options.name}, (err, resp) =>
       @robot.logger.debug resp
       @robot.logger.debug 'Nick changed'
-      cb()
+      callback()
 
   # Sync the list of known contacts
-  syncContacts: (cb) =>
+  syncContacts: (callback) =>
     @post 'contact/sync/all', {ignore: []}, (err, resp) =>
       @handleStreamEvent contact for contact in resp.contacts
       @robot.logger.debug 'Contacts in sync'
-      cb()
+      callback()
 
+  # Synchronizes some initial data with Fleep
+  # list of conversations / bot nick / contacts / event_horizon
   sync:  =>
 
     @robot.logger.debug "Syncing..."
@@ -269,6 +300,8 @@ module.exports = class FleepClient extends EventEmitter
       (cb) => @changeNick cb,
       (cb) => @syncContacts cb
     ], (err, results) =>
+      if err isnt null
+        @robot.logger.error 'Error during data sync: '+JSON.stringify err
       @robot.logger.debug 'Everything synced, ready to go!'
       @emit 'synced', @
 
