@@ -13,7 +13,9 @@ module.exports = class WebRequest extends EventEmitter
     super
 
   prepareReqOptions: (path, body = {}, headers = {}) ->
+
     host = 'fleep.io'
+
     headers = Util.merge {
       Host: host
       'User-Agent': 'hubot-fleep/0.6',
@@ -21,9 +23,9 @@ module.exports = class WebRequest extends EventEmitter
     }, headers
 
     if @token_id?
-      cookie = 'token_id='+@token_id
-      @logger.debug "Setting cookie: #{cookie}"
-      headers['Cookie'] = cookie
+      cookieString = cookie.serialize 'token_id', @token_id
+      @logger.debug "Setting cookie: #{cookieString}"
+      headers['Cookie'] = cookieString
 
     reqOptions =
       agent: false
@@ -42,11 +44,9 @@ module.exports = class WebRequest extends EventEmitter
     unless headers['Content-Disposition']?
       body = new Buffer JSON.stringify(body)
 
-
     reqOptions.headers['Content-Length'] = body.length
 
     [reqOptions, body]
-
 
   post: (path, body, callback, headers = {}) ->
     @logger.debug 'Sending new POST request'
@@ -73,7 +73,6 @@ module.exports = class WebRequest extends EventEmitter
           callback? data
           return
 
-
         @logger.debug 'HTTPS response body:'
         @logger.debug data
 
@@ -98,7 +97,6 @@ module.exports = class WebRequest extends EventEmitter
       @logger.error 'HTTPS request error:', err
       @logger.error err.stack
       callback? err
-
 
   getToken: (cookieString) ->
     @logger.debug 'Parsing cookie string ' + cookieString
