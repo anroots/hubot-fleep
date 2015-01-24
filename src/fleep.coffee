@@ -44,10 +44,10 @@ class Fleep extends Adapter
     # Check that Fleep account details have been provided
     unless @options.email?
       @robot.logger.emergency 'You must specify HUBOT_FLEEP_EMAIL'
-      process.exit(1)
+      process.exit 1
     unless @options.password?
       @robot.logger.emergency 'You must specify HUBOT_FLEEP_PASSWORD'
-      process.exit(1)
+      process.exit 1
     
     @fleepClient = new FleepClient {
       name: @robot.name,

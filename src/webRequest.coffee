@@ -68,12 +68,14 @@ module.exports = class WebRequest extends EventEmitter
         data += chunk
   
       response.on 'end', =>
+        data = JSON.parse data
+
         if response.statusCode >= 400
           @logger.error "Fleep API error : #{response.statusCode}"
           @logger.error data
+          callback? data
           return
   
-        data = JSON.parse data
 
         @logger.debug 'HTTPS response body:'
         @logger.debug data

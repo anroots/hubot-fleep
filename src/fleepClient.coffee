@@ -55,7 +55,11 @@ module.exports = class FleepClient extends EventEmitter
       email: email,
       password: password
       }, (err, resp, metaData) =>
-      
+
+      if err isnt null
+        @robot.logger.emergency 'Unable to login to Fleep: ' + err.error_message
+        process.exit 1
+
       if resp.ticket?
         @robot.logger.debug "Login returned ticket #{resp.ticket}"
         @ticket = resp.ticket
