@@ -4,6 +4,7 @@ url = require 'url'
 http = require 'http'
 path = require 'path'
 mime = require 'mime-types'
+cookie = require 'cookie'
 
 {EventEmitter} = require 'events'
 
@@ -81,7 +82,7 @@ module.exports = class WebRequest extends EventEmitter
 
         if response.headers['set-cookie']? and
         response.headers['set-cookie'][0]?
-          @token_id = this.getCookie response.headers['set-cookie'][0]
+          @token_id = @getToken response.headers['set-cookie'][0]
           @logger.debug 'Saving cookie value for later use: token_id='+@token_id
           metaData['token_id'] = @token_id
           
@@ -133,10 +134,8 @@ module.exports = class WebRequest extends EventEmitter
           callbackfunc,
           headers)
 
-  getCookie: (header) ->
-    @logger.debug 'Parsing cookie string ' + header
-    parts = header.split ';'
-    if parts[0]?
-      parts = parts[0].split '='
-      @logger.debug 'Token is ' + parts[1]
-      parts[1]
+  getToken: (cookieString) ->
+    @logger.debug 'Parsing cookie string ' + cookieString
+    cookies = cookie.parse cookieString
+    @logger.debug 'Token is ' + cookies.token_id
+    cookies.token_id

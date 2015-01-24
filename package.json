@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "async": "^0.2.5",
-    "mime-types":"^2.0"
+    "mime-types":"^2.0",
+    "cookie":"^0.1"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register"
