@@ -22,8 +22,7 @@ class Fleep extends Adapter
     # passing requests to and from Fleep
     @fleepClient = new FleepClient {
       name: @robot.name,
-      markSeen: @options.markSeen,
-      uploadImages: @options.uploadImages
+      markSeen: @options.markSeen
     }, @robot
 
 

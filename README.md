@@ -30,7 +30,6 @@ In addition, the following optional variables can be set:
 
 * `HUBOT_LOG_LEVEL` _string [debug|info|notice|warning|error|critical|alert|emergency], default: info_ - Set the log level of Hubot. The Fleep adapter can output extensive debug messages.
 * `HUBOT_FLEEP_MARK_SEEN` _bool, default: true_ - Whether to mark Fleep messages as 'seen' by the bot. Enabling this gives users additional information about the bot's responsiveness, but forces the bot to make an additional HTTP request
-* `HUBOT_FLEEP_UPLOAD_IMAGES` _bool, default: true_ - Whether to upload image URL-s automatically to Fleep as image attachments
 
 # Contributing
 

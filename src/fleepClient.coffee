@@ -30,28 +30,14 @@ module.exports = class FleepClient extends EventEmitter
     last = @robot.brain.get 'fleep_last_horizon'
     @robot.logger.debug 'Last event horizon from robot brain: '+last
     last or 0
-  
-  postImageFromUri: (envelope, uri) ->
-    @robot.logger.debug 'Uploading image from URI ' + uri
 
-    request = new WebRequest @robot.logger, @ticket, @token_id
-    callbackfunc = (err, resp) =>
-
-      fileUrl = resp.files[0].upload_url
-          
-      @post "message/send/#{envelope.room}", {
-        message: uri+'<<(link to source)>>',
-        attachments: [fileUrl]
-        }, (err, resp) ->
-        @robot.logger.debug resp
-    request.uploadImage uri, callbackfunc
 
   setLastEventHorizon: (horizon) ->
     @robot.brain.set 'fleep_last_horizon', horizon
 
   login: (email, password) =>
     @robot.logger.debug 'Attempting to log in...'
-    
+
     @post 'account/login', {
       email: email,
       password: password
@@ -64,7 +50,7 @@ module.exports = class FleepClient extends EventEmitter
       if resp.ticket?
         @robot.logger.debug "Login returned ticket #{resp.ticket}"
         @ticket = resp.ticket
-      
+
       if metaData.token_id?
         @robot.logger.debug 'Login returned token_id cookie:'+metaData.token_id
         @token_id = metaData.token_id
@@ -79,7 +65,7 @@ module.exports = class FleepClient extends EventEmitter
   logout: ->
     @post 'account/logout', {}, (err, resp) ->
       @robot.logger.debug 'User session with Fleep closed.'
-      
+
   handleStreamEvents: (resp) =>
     if resp.stream? and resp.stream.length
       @handleStreamEvent event for event in resp.stream
@@ -136,7 +122,7 @@ module.exports = class FleepClient extends EventEmitter
       "conversations, adding it now"
       @saveConversation event.conversation_id, event.message_nr
       return
-    
+
     # This message is an echo of our own message, ignore
     if event.account_id is @profile.account_id
       @robot.logger.debug 'It is my own message, ignore it'
@@ -195,24 +181,8 @@ module.exports = class FleepClient extends EventEmitter
   send: (envelope, message) =>
     @robot.logger.debug 'Sending new message to conversation ' + envelope.room
 
-    normalMessageCallback = (message) =>
-      @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
-        @robot.logger.debug 'Callback for send called'
-
-    imageCallback = (isImage) =>
-      if isImage
-        @postImageFromUri envelope, message
-      else
-        normalMessageCallback message
-
-    # If the message is an image link and image upload is enabled,
-    # upload the image to Fleep and post a message with the link
-
-    if @options.uploadImages
-      Util.isImageUri message, imageCallback
-      return
-
-    normalMessageCallback message
+    @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
+      @robot.logger.debug 'Callback for send called'
 
 
   reply: (envelope, message) ->

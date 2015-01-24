@@ -12,7 +12,4 @@ export HUBOT_LOG_LEVEL="info"
 # Mark the messages as 'seen' by the bot?
 export HUBOT_FLEEP_MARK_SEEN=true
 
-# Convert image links to actual images?
-export HUBOT_FLEEP_UPLOAD_IMAGES=true
-
 bin/hubot -a fleep -n BotName
