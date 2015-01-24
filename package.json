@@ -1,7 +1,11 @@
 {
   "name":        "hubot-fleep",
-  "version":     "0.5.0",
-  "author":      "Ando Roots <ando@sqroot.eu>",
+  "version":     "0.6.0",
+  "author":      {
+    "name":"Ando Roots",
+    "email": "ando@sqroot.eu",
+    "url":"http://sqroot.eu"
+  },
   "keywords":    ["github","hubot","fleep","adapter"],
   "description": "Fleep.io adapter for Hubot",
   "licenses":     [{
@@ -12,9 +16,12 @@
     "type" : "git",
     "url" : "https://github.com/anroots/hubot-fleep.git"
   },
+  "bugs": {
+    "url":"https://github.com/anroots/hubot-fleep/issues",
+    "email":"ando@sqroot.eu"
+  },
   "dependencies": {
     "async": "^0.2.5",
-    "mime-types":"^2.0",
     "cookie":"^0.1"
   },
   "scripts": {
@@ -22,7 +29,7 @@
   },
   "main": "./src/fleep",
   "engine": {
-    "node": ">= 0.9"
+    "node": ">= 0.10.35"
   },
   "devDependencies": {
     "coffee-script": "latest",
