@@ -25,11 +25,11 @@ The adapter requires the following environment variables to be defined:
 
 * `HUBOT_FLEEP_EMAIL` _string, default: none_ - The e-mail of your Fleep account for the Hubot instance
 * `HUBOT_FLEEP_PASSWORD` _string, default: none_ - The password of your Fleep account
-* `HUBOT_FLEEP_MARK_SEEN` _bool, default: true_ - Whether to mark Fleep messages as 'seen' by the bot. Enabling this gives users additional information about the bot's responsiveness, but forces the bot to make an additional HTTP request
 
 In addition, the following optional variables can be set:
 
 * `HUBOT_LOG_LEVEL` _string [debug|info|notice|warning|error|critical|alert|emergency], default: info_ - Set the log level of Hubot. The Fleep adapter can output extensive debug messages.
+* `HUBOT_FLEEP_MARK_SEEN` _bool, default: true_ - Whether to mark Fleep messages as 'seen' by the bot. Enabling this gives users additional information about the bot's responsiveness, but forces the bot to make an additional HTTP request
 
 # Contributing
 

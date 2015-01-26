@@ -1,7 +1,11 @@
 {
   "name":        "hubot-fleep",
   "version":     "0.4.0",
-  "author":      "Ando Roots <ando@sqroot.eu>",
+  "author":      {
+    "name":"Ando Roots",
+    "email": "ando@sqroot.eu",
+    "url":"http://sqroot.eu"
+  },
   "keywords":    ["github","hubot","fleep","adapter"],
   "description": "Fleep.io adapter for Hubot",
   "licenses":     [{
@@ -12,15 +16,26 @@
     "type" : "git",
     "url" : "https://github.com/anroots/hubot-fleep.git"
   },
-  "devDependencies": {
-    "coffee-script": "1.6.3"
+  "bugs": {
+    "url":"https://github.com/anroots/hubot-fleep/issues",
+    "email":"ando@sqroot.eu"
+  },
+  "dependencies": {
+    "async": "~0.2.5",
+    "cookie":"~0.1",
+    "string":"~3.0"
+  },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register"
   },
   "main": "./src/fleep",
   "engine": {
-    "node": ">= 0.4.7"
+    "node": ">= 0.10.35"
   },
   "devDependencies": {
     "coffee-script": "latest",
-    "coffeelint": "latest"
+    "coffeelint": "latest",
+    "mocha": "^2.1",
+    "chai": "^1.10"
   }
 }
