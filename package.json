@@ -21,8 +21,9 @@
     "email":"ando@sqroot.eu"
   },
   "dependencies": {
-    "async": "^0.2.5",
-    "cookie":"^0.1"
+    "async": "~0.2.5",
+    "cookie":"~0.1",
+    "string":"~3.0"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register"

@@ -4,6 +4,7 @@
 WebRequest = require './webRequest'
 Util = require './util'
 async = require 'async'
+S = require 'string'
 
 module.exports = class FleepClient extends EventEmitter
 
@@ -27,11 +28,11 @@ module.exports = class FleepClient extends EventEmitter
     request = new WebRequest @robot.logger, @ticket, @token_id
     request.post path, body, (error, response, metaData) =>
 
-      if response.ticket?
+      if response?.ticket?
         @robot.logger.debug "Response contains ticket: #{response.ticket}"
         @ticket = response.ticket
 
-      if metaData.token_id?
+      if metaData?.token_id?
         @robot.logger.debug 'Response contains token_id: ' + metaData.token_id
         @token_id = metaData.token_id
 
@@ -107,13 +108,15 @@ module.exports = class FleepClient extends EventEmitter
 
     @robot.logger.debug 'Handling event: '+JSON.stringify event
 
+    eventRecType = event.mk_rec_type or null
+
     # Event does not have a rec_type, API error?
-    if not event.mk_rec_type?
+    if eventRecType is null
       @robot.logger.error 'Invalid response from the server, no rec_type'
       return
 
     # New contact information
-    if event.mk_rec_type is 'contact'
+    if eventRecType is 'contact'
       user = @robot.brain.userForId event.account_id
 
       # Save the contact name if it's currently unknown
@@ -127,9 +130,9 @@ module.exports = class FleepClient extends EventEmitter
       return
 
     # Skip everything but text message events
-    if event.mk_rec_type isnt 'message'
+    if eventRecType isnt 'message'
       @robot.logger.debug 'Skipping stream item ' +
-      event.mk_rec_type + ', not a message type of event'
+      eventRecType + ', not a message type of event'
       return
 
     # Detected a new conversation
@@ -163,49 +166,68 @@ module.exports = class FleepClient extends EventEmitter
   # Message is a Fleep event response object
   handleMessage: (message) =>
 
+    messageText = message.message or null
+    conversationId = message.conversation_id or null
+
+    # Extract the message type. One of text|kick|topic|add
+    messageType = message.mk_message_type or null
+
+    if messageType is 'topic'
+      # A topic message is funny. It's number is in message_nr
+      # unless the topic was edited before some other message was posted.
+      # Then we need to fetch it's message number from revision_message_nr
+      messageNumber = message.message_nr or message.revision_message_nr
+    else
+      messageNumber = message.message_nr or null
+
     # Do nothing if the message is already seen
-    if @isMessageSeen message.conversation_id, message.message_nr
-      @robot.logger.debug 'Already seen message ' + message.message_nr
+    if @isMessageSeen conversationId, messageNumber
+      @robot.logger.debug 'Already seen message ' + messageNumber
       return
 
     @robot.logger.info 'Got message: ' + JSON.stringify message
 
-    text = null
-
-    if message.message?
-      # Strip HTML tags
-      text = message.message.replace(/(<([^>]+)>)/ig,"")
+    # Strip HTML tags
+    if messageText isnt null and messageType is 'text'
+      messageText = S(message.message).stripTags().s
 
     # Mark message as read
-    @markRead message.conversation_id, message.message_nr
+    @markRead conversationId, messageNumber
 
-    # Create a Hubot user object
-    if message.mk_message_type? and message.mk_message_type in ['kick','add']
+    # Extract sender ID
+    if messageType in ['kick','add']
+      # Kick and Add messages have the sender encoded
+      # as a JSON string in the message key
       senderId = JSON.parse(message.message).members[0]
     else
       senderId = message.account_id
 
+    # Create a Hubot user object
     author = @robot.brain.userForId senderId
-    author.room = message.conversation_id
+    author.room = conversationId
     author.reply_to = senderId
 
-    msg = new TextMessage author, text, message.message_nr
-    if message.mk_message_type?
-      switch message.mk_message_type
-        when 'kick'
-          @robot.logger.debug 'User kicked from conversation'
-          msg = new LeaveMessage author
-        when 'add'
-          @robot.logger.debug 'User added to conversation'
-          msg = new EnterMessage author
-        when 'topic'
-          @robot.logger.debug 'Topic changed'
-          msg = new TopicMessage(author,
-            JSON.parse(message.message).topic,
-            message.message_nr
-          )
+    messageObject = @createMessage(
+      author, messageText, messageType, messageNumber
+    )
 
-    @emit 'gotMessage', msg
+    @emit 'gotMessage', messageObject
+
+  # Returns a correct Message subtype object depending on the message type
+  createMessage: (author, message, type, messageNumber = null) ->
+    switch type
+      when 'kick'
+        @robot.logger.debug "#{author.name} kicked from #{author.room}"
+        return new LeaveMessage author
+      when 'add'
+        @robot.logger.debug "#{author.name} joined #{author.room}"
+        return new EnterMessage author
+      when 'topic'
+        topic = JSON.parse(message).topic
+        @robot.logger.debug "#{author.room} topic is now #{topic}"
+        return new TopicMessage author, topic, messageNumber
+      else
+        return new TextMessage author, message, messageNumber
 
   # Send a new long poll request to the Fleep API
   # The request will wait ~90 seconds
