@@ -1,5 +1,5 @@
 {EventEmitter} = require 'events'
-{TextMessage} = require 'hubot'
+{TextMessage, EnterMessage, LeaveMessage, TopicMessage} = require 'hubot'
 
 WebRequest = require './webRequest'
 Util = require './util'
@@ -147,14 +147,8 @@ module.exports = class FleepClient extends EventEmitter
 
     # Ignore edited messages (messages that were posted, then edited)
     # See https://github.com/anroots/hubot-fleep/issues/4
-    if event.revision_message_nr?
+    if event.revision_message_nr? and event.mk_message_type isnt 'topic'
       @robot.logger.debug 'This is an edited message, skipping...'
-      return
-
-    # Ignore messages without the 'message' key - some invalid state
-    if not event.message?
-      @robot.logger.error 'Invalid API response from the server!' +
-      ' Expected a "message" key.'
       return
 
     # Patch the received text message to Hubot
@@ -170,23 +164,48 @@ module.exports = class FleepClient extends EventEmitter
   handleMessage: (message) =>
 
     # Do nothing if the message is already seen
-    return if @isMessageSeen message.conversation_id, message.message_nr
+    if @isMessageSeen message.conversation_id, message.message_nr
+      @robot.logger.debug 'Already seen message ' + message.message_nr
+      return
 
-    # Strip HTML tags
-    text = message.message.replace(/(<([^>]+)>)/ig,"")
+    @robot.logger.info 'Got message: ' + JSON.stringify message
+
+    text = null
+
+    if message.message?
+      # Strip HTML tags
+      text = message.message.replace(/(<([^>]+)>)/ig,"")
 
     # Mark message as read
     @markRead message.conversation_id, message.message_nr
 
-    @robot.logger.info 'Got message: ' + JSON.stringify message
-
     # Create a Hubot user object
-    author = @robot.brain.userForId message.account_id
-    author.room = message.conversation_id
-    author.reply_to = message.account_id
+    if message.mk_message_type? and message.mk_message_type in ['kick','add']
+      senderId = JSON.parse(message.message).members[0]
+    else
+      senderId = message.account_id
 
-    textMessage = new TextMessage author, text
-    @emit 'gotMessage', textMessage
+    author = @robot.brain.userForId senderId
+    author.room = message.conversation_id
+    author.reply_to = senderId
+
+    msg = new TextMessage author, text, message.message_nr
+    if message.mk_message_type?
+      switch message.mk_message_type
+        when 'kick'
+          @robot.logger.debug 'User kicked from conversation'
+          msg = new LeaveMessage author
+        when 'add'
+          @robot.logger.debug 'User added to conversation'
+          msg = new EnterMessage author
+        when 'topic'
+          @robot.logger.debug 'Topic changed'
+          msg = new TopicMessage(author,
+            JSON.parse(message.message).topic,
+            message.message_nr
+          )
+
+    @emit 'gotMessage', msg
 
   # Send a new long poll request to the Fleep API
   # The request will wait ~90 seconds
