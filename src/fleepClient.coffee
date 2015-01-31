@@ -127,6 +127,9 @@ module.exports = class FleepClient extends EventEmitter
       if not user.email? and event.email?
         user.email = event.email
 
+      if not user.phone_nr? and event.phone_nr?.length
+        user.phone = event.phone_nr
+
       return
 
     # Skip everything but text message events
