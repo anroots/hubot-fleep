@@ -202,10 +202,20 @@ module.exports = class FleepClient extends EventEmitter
     else
       senderId = message.account_id
 
-    # Create a Hubot user object
-    author = @robot.brain.userForId senderId
+    # Find the user who sent the message
+    user = @robot.brain.userForId senderId
+
+    # A workaround for not saving the room and reply_to info
+    # to the robot brain.
+    # See https://github.com/hipchat/hubot-hipchat/issues/175
+    author = Util.merge user, {}
+
+    # Add the room ID where the message came from
     author.room = conversationId
-    author.reply_to = senderId
+
+    # Since private messages are the same as rooms in Fleep,
+    # the reply_to is equal to the room where the message was sent
+    author.reply_to = conversationId
 
     messageObject = @createMessage(
       author, messageText, messageType, messageNumber
