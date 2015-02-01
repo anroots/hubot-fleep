@@ -190,9 +190,9 @@ module.exports = class FleepClient extends EventEmitter
 
     @robot.logger.info 'Got message: ' + JSON.stringify message
 
-    # Strip HTML tags
     if messageText isnt null and messageType is 'text'
-      messageText = S(message.message).stripTags().s
+      # Strip HTML tags and decode HTML entities
+      messageText = S(message.message).stripTags().decodeHTMLEntities().s
 
     # Mark message as read
     @markRead conversationId, messageNumber
