@@ -72,7 +72,7 @@ module.exports = class FleepClient extends EventEmitter
 
   # Destroy Fleep session
   logout: ->
-    @post 'account/logout', {}, (err, resp) =>
+    @post 'account/logout', {}, (err, resp) ->
       if err isnt null
         return @robot.logger.error 'Unable to destroy Fleep session'
       @robot.logger.debug 'User session with Fleep closed.'
@@ -246,7 +246,7 @@ module.exports = class FleepClient extends EventEmitter
   send: (envelope, message) =>
     @robot.logger.debug 'Sending new message to conversation ' + envelope.room
 
-    @post "message/send/#{envelope.room}", {message: message}, (err, resp) =>
+    @post "message/send/#{envelope.room}", {message: message}, (err, resp) ->
       if err isnt null
         @robot.logger.error 'Unable to send a message: '+JSON.stringify err
 
@@ -259,7 +259,7 @@ module.exports = class FleepClient extends EventEmitter
       topic: null, # Topic is currently empty, the default is the bot's name
       emails:envelope.user.email,
       message: message
-    }, (err, resp) =>
+    }, (err, resp) ->
       if err isnt null
         @robot.logger.error 'Unable to send a 1:1 message: '+JSON.stringify err
 
@@ -282,7 +282,7 @@ module.exports = class FleepClient extends EventEmitter
     "#{conversation_id} as read"
     @post "message/mark_read/#{conversation_id}", {
       message_nr: message_nr
-      }, (err, resp) =>
+      }, (err, resp) ->
       @robot.logger.debug 'Message marked as read.' if err is null
 
   # Change the topic of a conversation
@@ -291,7 +291,7 @@ module.exports = class FleepClient extends EventEmitter
     "topic to #{topic}"
     @post "conversation/set_topic/#{conversation_id}", {
       topic: topic
-      }, (err,resp) =>
+      }, (err,resp) ->
       @robot.logger.error 'Unable to set topic' if err isnt null
 
   # Syncs the list of known conversations
@@ -345,3 +345,4 @@ module.exports = class FleepClient extends EventEmitter
         @robot.logger.error 'Error during data sync: '+JSON.stringify err
       @robot.logger.debug 'Everything synced, ready to go!'
       @emit 'synced', @
+
