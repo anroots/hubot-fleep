@@ -35,6 +35,8 @@ In addition, the following optional variables can be set:
 
 You can contribute to the development of this adapter by sending pull requests and by reporting issues.
 
+Pull request should go to the develop branch and pass the Travis build.
+
 # Licence
 
 The MIT License (MIT). Please see LICENCE file for more information.
