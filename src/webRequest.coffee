@@ -48,13 +48,13 @@ module.exports = class WebRequest extends EventEmitter
 
     [reqOptions, body]
 
-  post: (path, body, callback, headers = {}) ->
+  post: (path, jsonBody, callback, headers = {}) ->
     @logger.debug 'Sending new POST request'
 
-    [reqOptions, body] = this.prepareReqOptions path, body, headers
+    [reqOptions, body] = this.prepareReqOptions path, jsonBody, headers
 
-    @logger.debug 'Request options:'
-    @logger.debug reqOptions
+    @logger.debug 'Request options: ' + JSON.stringify reqOptions
+    @logger.debug 'Request body: ' + JSON.stringify jsonBody
 
     # Send the request
     request = https.request reqOptions, (response) =>
