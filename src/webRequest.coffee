@@ -18,7 +18,7 @@ module.exports = class WebRequest extends EventEmitter
 
     headers = Util.merge {
       Host: host
-      'User-Agent': 'hubot-fleep/0.6',
+      'User-Agent': 'hubot-fleep/0.7.0',
       'Content-Type': 'application/json'
     }, headers
 
@@ -59,22 +59,33 @@ module.exports = class WebRequest extends EventEmitter
     # Send the request
     request = https.request reqOptions, (response) =>
 
-      @logger.debug 'Got response from the server.'
+      @logger.debug 'Response headers: ' +
+        JSON.stringify response.headers, null, 2
+
+      # Get the response stream into a variable
       data = ''
       response.on 'data', (chunk) ->
         data += chunk
 
       response.on 'end', =>
-        data = JSON.parse data
 
+
+        # Handle HTTP response errors from the Fleep API
         if response.statusCode >= 400
           @logger.error "Fleep API error : #{response.statusCode}"
-          @logger.error data
+          @logger.error 'Raw response body: ' + data
           callback? data
           return
 
-        @logger.debug 'HTTPS response body:'
-        @logger.debug data
+        # Parse Fleep API response into a JSON structure
+        try
+          data = JSON.parse data
+          @logger.debug 'Response body: ' + JSON.stringify data, null, 2
+        catch error
+          @logger.error 'Error when trying to decode the response as JSON'
+          @logger.error 'Raw response body: ' + data
+          callback? data
+          return
 
         metaData = {}
 
