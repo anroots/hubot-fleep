@@ -2,6 +2,7 @@
 https = require 'https'
 url = require 'url'
 cookie = require 'cookie'
+backoff = require 'backoff'
 
 {EventEmitter} = require 'events'
 
@@ -10,6 +11,15 @@ Util = require './util'
 module.exports = class WebRequest extends EventEmitter
 
   constructor: (@logger, @ticket, @token_id) ->
+
+    # Init Backoff object, which will be used to do exponential backoff
+    # when the request fails
+    @fibonacciBackoff = backoff.fibonacci {
+      initialDelay: 10,
+      maxDelay: 300
+    }
+    @fibonacciBackoff.failAfter 10
+
     super
 
   prepareReqOptions: (path, body = {}, headers = {}) ->
@@ -72,9 +82,29 @@ module.exports = class WebRequest extends EventEmitter
 
         # Handle HTTP response errors from the Fleep API
         if response.statusCode >= 400
-          @logger.error "Fleep API error : #{response.statusCode}"
+          @logger.error "Fleep API error, HTTP status is #{response.statusCode}"
           @logger.error 'Raw response body: ' + data
-          callback? data
+
+          # Call the callback with error data and return on HTTP 4XX errors
+          if response.statusCode >= 400 and response.statusCode < 500
+            callback? data
+            return
+
+          # Emitted when a backoff operation is started
+          @fibonacciBackoff.on 'backoff', (number, delay) =>
+            @logger.error "Request failed, retry in #{delay} seconds"
+
+          # Emitted when a backoff operation is done
+          @fibonacciBackoff.on 'ready', (number, delay) =>
+            @logger.info 'Resending the request'
+            @post path, jsonBody, callback, headers
+
+          # Emitted when the maximum number of backoffs is reached
+          @fibonacciBackoff.on 'fail', (number, delay) ->
+            @logger.error 'Max number of backoff requests reached'
+
+          @fibonacciBackoff.backoff()
+
           return
 
         # Parse Fleep API response into a JSON structure
@@ -94,6 +124,9 @@ module.exports = class WebRequest extends EventEmitter
           @token_id = @getToken response.headers['set-cookie'][0]
           @logger.debug 'Saving cookie value for later use: token_id='+@token_id
           metaData['token_id'] = @token_id
+
+        # Reset backoff object
+        @fibonacciBackoff.reset()
 
         @logger.debug 'Calling callback of request '+reqOptions.path
         callback? null, data, metaData
