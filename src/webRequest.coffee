@@ -1,7 +1,7 @@
-
 https = require 'https'
 url = require 'url'
 cookie = require 'cookie'
+proxy = require 'proxy-agent'
 backoff = require 'backoff'
 
 {EventEmitter} = require 'events'
@@ -37,8 +37,10 @@ module.exports = class WebRequest extends EventEmitter
       @logger.debug "Setting cookie: #{cookieString}"
       headers['Cookie'] = cookieString
 
+    https_proxy = process.env.https_proxy
+    agent = if https_proxy? then new proxy https_proxy else false
     reqOptions =
-      agent: false
+      agent: agent
       hostname : host
       port     : 443
       path     : '/api/' + path

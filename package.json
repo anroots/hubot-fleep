@@ -24,7 +24,8 @@
     "async": "~0.2.5",
     "cookie":"~0.1",
     "string":"~3.0",
-    "backoff": "~2.4"
+    "backoff": "~2.4",
+    "proxy-agent": "^2.0.0"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --compilers coffee:coffee-script/register"
