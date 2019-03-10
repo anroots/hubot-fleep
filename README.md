@@ -12,7 +12,7 @@ The adapter is in alpha status: it works for straightforward usage, but contains
 
 # Installation
 
-* Follow the "[Getting Started With Hubot](https://github.com/github/hubot/blob/master/docs/README.md)" guide to get a local installation of Hubot
+* Follow the "[Getting Started With Hubot](https://hubot.github.com/docs/)" guide to get a local installation of Hubot
 * When `yo hubot` command asks for an adapter, enter "fleep"
 * Create a new Fleep account for Hubot
 * Copy the `start.sh` script (from `node_modules/hubot-fleep` to hubot root dir), edit it and fill in Fleep user credentials
