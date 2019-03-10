@@ -3,7 +3,6 @@ node_js:
   - 10
 before_script:
   - node --check src/*.js
-  - node --check test/*.js
 notifications:
   email:
     on_success: never
