@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 - 2019-03-17
+
+## Changed
+
+- Converted adapter from CoffeeScript to JavaScript (#16)
+
 ## 0.7.1 - 2015-08-02
 
 ### Added
