@@ -1,29 +1,36 @@
 {
-  "name":        "hubot-fleep",
-  "version":     "0.7.1",
-  "author":      {
-    "name":"Ando Roots",
+  "name": "hubot-fleep",
+  "version": "0.7.1",
+  "author": {
+    "name": "Ando Roots",
     "email": "ando@sqroot.eu",
-    "url":"http://sqroot.eu"
+    "url": "http://sqroot.eu"
   },
-  "keywords":    ["github","hubot","fleep","adapter"],
+  "keywords": [
+    "github",
+    "hubot",
+    "fleep",
+    "adapter"
+  ],
   "description": "Fleep.io adapter for Hubot",
-  "licenses":     [{
-    "type":       "MIT",
-    "url":        "https://raw.githubusercontent.com/anroots/hubot-fleep/master/LICENSE"
-  }],
-  "repository" : {
-    "type" : "git",
-    "url" : "https://github.com/anroots/hubot-fleep.git"
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.githubusercontent.com/anroots/hubot-fleep/master/LICENSE"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anroots/hubot-fleep.git"
   },
   "bugs": {
-    "url":"https://github.com/anroots/hubot-fleep/issues",
-    "email":"ando@sqroot.eu"
+    "url": "https://github.com/anroots/hubot-fleep/issues",
+    "email": "ando@sqroot.eu"
   },
   "dependencies": {
     "async": "~0.2.5",
-    "cookie":"~0.1",
-    "string":"~3.0",
+    "cookie": "~0.1",
+    "string": "~3.0",
     "backoff": "~2.4",
     "proxy-agent": "^2.0.0"
   },
