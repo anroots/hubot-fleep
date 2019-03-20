@@ -2,7 +2,8 @@ language: node_js
 node_js:
   - 10
 before_script:
-  - node --check src/*.js
+  - coffeelint src
+  - coffeelint test
 notifications:
   email:
     on_success: never
