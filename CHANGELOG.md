@@ -1,8 +1,15 @@
 # Changelog
 
+## 0.9.0 - 2019-03-20
+
+### Changed
+
+- Revert release `0.8.0` - it was not properly tested and turned out `decaffination`
+  introduced bugs and changed JS behavior. Reverting until a proper migration can be done.
+
 ## 0.8.0 - 2019-03-17
 
-## Changed
+### Changed
 
 - Converted adapter from CoffeeScript to JavaScript (#16)
 
