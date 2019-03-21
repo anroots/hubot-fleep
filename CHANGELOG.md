@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 - 2019-03-21
+
+### Fixed
+
+- Update `.reply` method to work with the new Fleep API spec
+
 ## 0.9.0 - 2019-03-20
 
 ### Changed
