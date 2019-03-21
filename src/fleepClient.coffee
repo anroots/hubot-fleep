@@ -270,11 +270,11 @@ module.exports = class FleepClient extends EventEmitter
 
     @post 'conversation/create', {
       topic: null, # Topic is currently empty, the default is the bot's name
-      emails:envelope.user.email,
-      message: message
+      emails:envelope.user.email
     }, (err, resp) =>
       if err isnt null
-        @robot.logger.error 'Unable to send a 1:1 message: '+JSON.stringify err
+        return @robot.logger.error 'Unable to send a 1:1 message: '+JSON.stringify err
+      @send({room: resp.header.conversation_id}, message)
 
   # Get a hash of known conversations
   getKnownConversations: =>
