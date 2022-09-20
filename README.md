@@ -8,7 +8,7 @@ Enables to add a Hubot bot to Fleep.io conversations.
 [![Version](https://img.shields.io/npm/v/hubot-fleep.svg)](https://github.com/anroots/hubot-fleep/releases)
 [![Licence](https://img.shields.io/npm/l/express.svg)](https://github.com/anroots/hubot-fleep/blob/master/LICENSE)
 
-The adapter is in alpha status: it works for straightforward usage, but contains yet-to-be-discovered bugs. See the Issues tab for a list of known bugs and create a new issue if you discover something new.
+This project is archived, as Fleep service is in a sunsetting stage.
 
 # Installation
 
